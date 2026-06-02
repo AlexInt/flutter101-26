@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dart 深度概念可视化讲解</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    background: #0f1117;
+    color: #e1e4e8;
+    line-height: 1.6;
+  }
+
+  /* ── Navigation ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(15,17,23,0.95); backdrop-filter: blur(10px);
+    border-bottom: 1px solid #2d333b;
+    display: flex; justify-content: center; gap: 8px;
+    padding: 12px 16px; flex-wrap: wrap;
+  }
+  nav button {
+    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    padding: 8px 18px; border-radius: 20px; cursor: pointer;
+    font-size: 14px; transition: all 0.3s;
+  }
+  nav button:hover, nav button.active {
+    background: #1f6feb; color: #fff; border-color: #1f6feb;
+  }
+
+  /* ── Sections ── */
+  .section { display: none; padding: 80px 24px 40px; max-width: 960px; margin: 0 auto; }
+  .section.active { display: block; }
+  h1 { font-size: 28px; margin-bottom: 8px; color: #58a6ff; }
+  h2 { font-size: 20px; margin: 32px 0 16px; color: #f0883e; }
+  h3 { font-size: 16px; margin: 20px 0 10px; color: #7ee787; }
+  p, li { color: #b1bac4; margin-bottom: 8px; }
+  .subtitle { color: #8b949e; font-size: 15px; margin-bottom: 24px; }
+  code { background: #1c2128; color: #f0883e; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #1c2128; border-left: 3px solid #1f6feb; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+
+  /* ── Animation Container ── */
+  .canvas-box {
+    background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+    padding: 24px; margin: 20px 0; position: relative; overflow: hidden;
+  }
+  .canvas-box h3 { margin-top: 0; }
+
+  /* ══════════════════════════════════════════
+     1. Event Loop 动画
+     ══════════════════════════════════════════ */
+  .event-loop {
+    display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;
+    justify-content: center;
+  }
+  .queue-box {
+    flex: 1; min-width: 200px; background: #0d1117; border: 2px solid #30363d;
+    border-radius: 10px; padding: 16px; text-align: center;
+  }
+  .queue-box.microtask { border-color: #f78166; }
+  .queue-box.event { border-color: #58a6ff; }
+  .queue-box h4 { margin-bottom: 12px; font-size: 14px; }
+  .queue-item {
+    padding: 8px 12px; margin: 6px 0; border-radius: 6px; font-size: 13px;
+    animation: slideIn 0.5s ease-out;
+  }
+  .queue-item.mt { background: #3d1f1f; color: #f78166; border: 1px solid #f7816644; }
+  .queue-item.ev { background: #1a2a4a; color: #58a6ff; border: 1px solid #58a6ff44; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .loop-arrow {
+    font-size: 48px; color: #f0883e; animation: spin 3s linear infinite;
+    display: flex; align-items: center;
+  }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .exec-box {
+    min-width: 200px; background: #0d1117; border: 2px solid #7ee787;
+    border-radius: 10px; padding: 16px; text-align: center;
+  }
+  .exec-box h4 { color: #7ee787; margin-bottom: 12px; font-size: 14px; }
+  .exec-item {
+    padding: 8px 12px; margin: 6px 0; border-radius: 6px; font-size: 13px;
+    background: #1a3a2a; color: #7ee787; border: 1px solid #7ee78744;
+    animation: pulse 1s ease-in-out;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.5; }
+  }
+  #el-controls { text-align: center; margin-top: 16px; }
+  #el-controls button {
+    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    padding: 8px 16px; border-radius: 8px; cursor: pointer; margin: 4px;
+    font-size: 13px; transition: all 0.2s;
+  }
+  #el-controls button:hover { background: #30363d; }
+  .el-log {
+    margin-top: 12px; background: #0d1117; border-radius: 8px; padding: 12px;
+    font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+    max-height: 200px; overflow-y: auto; color: #8b949e;
+  }
+  .el-log .log-line { margin: 2px 0; animation: fadeIn 0.3s; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ══════════════════════════════════════════
+     2. Isolate 架构图
+     ══════════════════════════════════════════ */
+  .isolate-diagram {
+    display: flex; gap: 30px; justify-content: center; flex-wrap: wrap;
+    align-items: stretch;
+  }
+  .isolate-card {
+    flex: 1; min-width: 260px; max-width: 360px;
+    background: #0d1117; border: 2px solid #30363d; border-radius: 12px;
+    padding: 20px; position: relative;
+  }
+  .isolate-card.main { border-color: #58a6ff; }
+  .isolate-card.worker { border-color: #f78166; }
+  .isolate-card h4 { text-align: center; margin-bottom: 16px; }
+  .isolate-card .inner-box {
+    background: #161b22; border: 1px solid #21262d; border-radius: 8px;
+    padding: 12px; margin: 8px 0;
+  }
+  .isolate-card .inner-box h5 { font-size: 12px; color: #8b949e; margin-bottom: 8px; }
+  .mem-block {
+    display: flex; gap: 4px; flex-wrap: wrap;
+  }
+  .mem-cell {
+    width: 28px; height: 28px; border-radius: 4px; font-size: 9px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mem-cell.used { background: #1f6feb33; color: #58a6ff; border: 1px solid #58a6ff44; }
+  .mem-cell.free { background: #21262d; color: #484f58; border: 1px solid #30363d; }
+
+  .comm-bridge {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-width: 80px;
+  }
+  .bridge-line {
+    width: 2px; height: 20px; background: #f0883e;
+  }
+  .bridge-arrow {
+    color: #f0883e; font-size: 20px; animation: bounce 1.5s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(6px); }
+  }
+  .bridge-label {
+    font-size: 11px; color: #f0883e; writing-mode: vertical-lr;
+    letter-spacing: 2px; margin: 8px 0;
+  }
+
+  /* Isolate Demo */
+  .isolate-demo { text-align: center; margin-top: 20px; }
+  .isolate-demo button {
+    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    padding: 10px 20px; border-radius: 8px; cursor: pointer; margin: 4px;
+    font-size: 13px; transition: all 0.2s;
+  }
+  .isolate-demo button:hover { background: #1f6feb; color: #fff; }
+  .isolate-demo button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .isolate-result {
+    margin-top: 12px; padding: 12px; background: #0d1117; border-radius: 8px;
+    font-family: monospace; font-size: 13px; min-height: 60px; text-align: left;
+  }
+  .progress-bar {
+    height: 8px; background: #21262d; border-radius: 4px; margin: 8px 0;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 4px; transition: width 0.1s;
+    background: linear-gradient(90deg, #1f6feb, #58a6ff);
+  }
+  .progress-fill.blocked { background: linear-gradient(90deg, #da3633, #f78166); }
+
+  /* ══════════════════════════════════════════
+     3. Zone 嵌套图
+     ══════════════════════════════════════════ */
+  .zone-diagram { position: relative; margin: 20px auto; max-width: 600px; }
+  .zone-layer {
+    border: 2px dashed; border-radius: 12px; padding: 20px;
+    margin: 8px 0; position: relative;
+  }
+  .zone-layer.root { border-color: #484f58; background: #484f5810; }
+  .zone-layer.guarded { border-color: #f78166; background: #f7816610; }
+  .zone-layer.child { border-color: #58a6ff; background: #58a6ff10; }
+  .zone-label {
+    position: absolute; top: -10px; left: 16px; background: #161b22;
+    padding: 0 8px; font-size: 12px; font-weight: 600;
+  }
+  .zone-layer.root .zone-label { color: #8b949e; }
+  .zone-layer.guarded .zone-label { color: #f78166; }
+  .zone-layer.child .zone-label { color: #58a6ff; }
+  .zone-item-tag {
+    display: inline-block; padding: 4px 10px; border-radius: 4px;
+    font-size: 12px; margin: 4px;
+  }
+  .tag-catch { background: #f7816622; color: #f78166; border: 1px solid #f7816644; }
+  .tag-value { background: #58a6ff22; color: #58a6ff; border: 1px solid #58a6ff44; }
+  .tag-print { background: #7ee78722; color: #7ee787; border: 1px solid #7ee78744; }
+
+  /* ══════════════════════════════════════════
+     4. 代码生成流程
+     ══════════════════════════════════════════ */
+  .codegen-flow {
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; flex-wrap: wrap; margin: 20px 0;
+  }
+  .codegen-step {
+    background: #0d1117; border: 2px solid #30363d; border-radius: 10px;
+    padding: 16px; min-width: 180px; text-align: center;
+    transition: all 0.5s; opacity: 0.4; transform: scale(0.95);
+  }
+  .codegen-step.active { opacity: 1; transform: scale(1); border-color: #1f6feb; }
+  .codegen-step h5 { color: #58a6ff; font-size: 13px; margin-bottom: 8px; }
+  .codegen-step p { font-size: 12px; color: #8b949e; margin: 0; }
+  .codegen-step .code-preview {
+    background: #161b22; border-radius: 6px; padding: 8px; margin-top: 8px;
+    font-family: monospace; font-size: 11px; color: #f0883e; text-align: left;
+  }
+  .codegen-arrow { color: #f0883e; font-size: 24px; }
+  .codegen-controls { text-align: center; margin: 16px 0; }
+  .codegen-controls button {
+    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px;
+  }
+  .codegen-controls button:hover { background: #30363d; }
+
+  /* ══════════════════════════════════════════
+     5. Tree Shaking 可视化
+     ══════════════════════════════════════════ */
+  .tree-container { position: relative; margin: 20px 0; }
+  .tree-code-panels {
+    display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+  }
+  .tree-panel {
+    flex: 1; min-width: 280px; background: #0d1117; border: 1px solid #30363d;
+    border-radius: 10px; padding: 16px;
+  }
+  .tree-panel h4 { font-size: 14px; margin-bottom: 12px; text-align: center; }
+  .tree-code-line {
+    padding: 4px 8px; margin: 3px 0; border-radius: 4px; font-family: monospace;
+    font-size: 12px; transition: all 0.8s ease;
+  }
+  .tree-code-line.used { background: #1a3a2a; color: #7ee787; border-left: 3px solid #7ee787; }
+  .tree-code-line.unused { background: #3d1f1f; color: #f7816688; border-left: 3px solid #f7816644; }
+  .tree-code-line.shaken {
+    opacity: 0.15; transform: translateX(30px); text-decoration: line-through;
+    background: #3d1f1f33; color: #f7816644; border-left: 3px solid #f7816622;
+  }
+  .tree-controls { text-align: center; margin: 16px 0; }
+  .tree-controls button {
+    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 14px;
+    transition: all 0.2s;
+  }
+  .tree-controls button:hover { background: #da3633; color: #fff; border-color: #da3633; }
+  .tree-stats {
+    display: flex; justify-content: center; gap: 24px; margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .tree-stat {
+    text-align: center; padding: 12px 20px; background: #0d1117;
+    border: 1px solid #30363d; border-radius: 8px;
+  }
+  .tree-stat .num { font-size: 28px; font-weight: 700; }
+  .tree-stat .num.green { color: #7ee787; }
+  .tree-stat .num.red { color: #f78166; }
+  .tree-stat .label { font-size: 12px; color: #8b949e; }
+
+  /* ── Comparison Table ── */
+  .compare-table {
+    width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px;
+  }
+  .compare-table th {
+    background: #21262d; color: #58a6ff; padding: 10px 12px; text-align: left;
+    border-bottom: 2px solid #30363d;
+  }
+  .compare-table td {
+    padding: 8px 12px; border-bottom: 1px solid #21262d; color: #b1bac4;
+  }
+  .compare-table tr:hover td { background: #161b22; }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .isolate-diagram, .tree-code-panels, .codegen-flow { flex-direction: column; align-items: center; }
+    .comm-bridge { writing-mode: horizontal-tb; }
+    .bridge-label { writing-mode: horizontal-tb; }
+    nav { gap: 4px; }
+    nav button { padding: 6px 12px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <button class="active" onclick="showSection('eventloop')">Event Loop</button>
+  <button onclick="showSection('isolate')">Isolate</button>
+  <button onclick="showSection('zone')">Zone</button>
+  <button onclick="showSection('codegen')">代码生成</button>
+  <button onclick="showSection('treeshake')">Tree Shaking</button>
+  <button onclick="showSection('summary')">总结对比</button>
+</nav>
+
+<!-- ═══════════════════════════════════════
+     Section 1: Event Loop
+     ═══════════════════════════════════════ -->
+<div id="eventloop" class="section active">
+  <h1>Dart Event Loop 工作原理</h1>
+  <p class="subtitle">理解 Event Loop 是掌握 async/await、Stream、Zone 的基础</p>
+
+  <div class="note">
+    <p><strong>核心规则：</strong>Dart 是单线程的，所有代码都在 Event Loop 中执行。Event Loop 优先处理 <code>Microtask Queue</code>，然后处理 <code>Event Queue</code>。</p>
+  </div>
+
+  <div class="canvas-box">
+    <h3>交互式 Event Loop 模拟</h3>
+    <p style="font-size:13px; color:#8b949e; margin-bottom:16px;">点击按钮添加任务到队列，观察执行顺序</p>
+
+    <div class="event-loop">
+      <div class="queue-box microtask">
+        <h4 style="color:#f78166;">Microtask Queue</h4>
+        <div id="microtask-queue"></div>
+      </div>
+
+      <div class="loop-arrow">⟳</div>
+
+      <div class="exec-box">
+        <h4>正在执行</h4>
+        <div id="executing"></div>
+      </div>
+
+      <div class="loop-arrow">⟳</div>
+
+      <div class="queue-box event">
+        <h4 style="color:#58a6ff;">Event Queue</h4>
+        <div id="event-queue"></div>
+      </div>
+    </div>
+
+    <div id="el-controls">
+      <button onclick="addMicrotask()">+ Microtask (scheduleMicrotask)</button>
+      <button onclick="addEvent()">+ Event (Future/Timer/IO)</button>
+      <button onclick="runOneStep()" style="background:#1f6feb; color:#fff; border-color:#1f6feb;">▶ 执行一步</button>
+      <button onclick="autoRun()" id="auto-run-btn">⏩ 自动运行</button>
+      <button onclick="resetEL()">🔄 重置</button>
+    </div>
+
+    <div class="el-log" id="el-log">
+      <div class="log-line" style="color:#58a6ff;">💡 提示：点击按钮添加任务，然后点击"执行一步"观察顺序</div>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><strong>关键理解：</strong></p>
+    <ul>
+      <li><code>Future</code> 的回调进入 <strong>Event Queue</strong></li>
+      <li><code>Future.microtask()</code> / <code>scheduleMicrotask()</code> 进入 <strong>Microtask Queue</strong></li>
+      <li>Microtask 优先级高于 Event（每次 Event Loop 循环先清空 microtask）</li>
+      <li><code>async/await</code> 本质上是把后续代码放入 Microtask Queue</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     Section 2: Isolate
+     ═══════════════════════════════════════ -->
+<div id="isolate" class="section">
+  <h1>Isolate 架构与通信</h1>
+  <p class="subtitle">Dart 的多线程方案：独立内存 + 消息传递（无锁）</p>
+
+  <div class="canvas-box">
+    <h3>Isolate 内存隔离模型</h3>
+    <div class="isolate-diagram">
+      <div class="isolate-card main">
+        <h4 style="color:#58a6ff;">Main Isolate</h4>
+        <div class="inner-box">
+          <h5>Event Loop</h5>
+          <div class="queue-item ev" style="font-size:12px;">UI 渲染任务</div>
+          <div class="queue-item ev" style="font-size:12px;">用户输入事件</div>
+          <div class="queue-item mt" style="font-size:12px;">async 回调</div>
+        </div>
+        <div class="inner-box">
+          <h5>独立内存空间</h5>
+          <div class="mem-block">
+            <div class="mem-cell used">Widget</div>
+            <div class="mem-cell used">State</div>
+            <div class="mem-cell used">List</div>
+            <div class="mem-cell free"></div>
+            <div class="mem-cell free"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="comm-bridge">
+        <div class="bridge-line"></div>
+        <div class="bridge-arrow">→</div>
+        <div class="bridge-label">SendPort</div>
+        <div class="bridge-arrow">←</div>
+        <div class="bridge-line"></div>
+      </div>
+
+      <div class="isolate-card worker">
+        <h4 style="color:#f78166;">Worker Isolate</h4>
+        <div class="inner-box">
+          <h5>Event Loop</h5>
+          <div class="queue-item ev" style="font-size:12px; background:#3d1f1f; color:#f78166; border-color:#f7816644;">JSON 解析</div>
+          <div class="queue-item ev" style="font-size:12px; background:#3d1f1f; color:#f78166; border-color:#f7816644;">图片处理</div>
+        </div>
+        <div class="inner-box">
+          <h5>独立内存空间（不能访问 Main 的内存！）</h5>
+          <div class="mem-block">
+            <div class="mem-cell" style="background:#f7816622; color:#f78166; border:1px solid #f7816644;">JSON</div>
+            <div class="mem-cell" style="background:#f7816622; color:#f78166; border:1px solid #f7816644;">Data</div>
+            <div class="mem-cell free"></div>
+            <div class="mem-cell free"></div>
+            <div class="mem-cell free"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="canvas-box">
+    <h3>主线程阻塞 vs Isolate 对比模拟</h3>
+    <p style="font-size:13px; color:#8b949e; margin-bottom:12px;">模拟 CPU 密集任务对 UI 的影响</p>
+
+    <div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center;">
+      <div style="flex:1; min-width:250px;">
+        <h4 style="color:#f78166; font-size:14px; text-align:center;">主线程执行（阻塞 UI）</h4>
+        <div class="progress-bar"><div class="progress-fill blocked" id="main-progress" style="width:0%"></div></div>
+        <div style="font-size:12px; color:#8b949e; text-align:center;" id="main-status">等待开始</div>
+      </div>
+      <div style="flex:1; min-width:250px;">
+        <h4 style="color:#7ee787; font-size:14px; text-align:center;">Isolate 执行（不阻塞 UI）</h4>
+        <div class="progress-bar"><div class="progress-fill" id="iso-progress" style="width:0%"></div></div>
+        <div style="font-size:12px; color:#8b949e; text-align:center;" id="iso-status">等待开始</div>
+      </div>
+    </div>
+
+    <div class="isolate-demo">
+      <button onclick="simulateMainBlocking()">主线程执行重任务</button>
+      <button onclick="simulateIsolate()">Isolate 执行重任务</button>
+    </div>
+
+    <div class="isolate-result" id="isolate-log">
+      <span style="color:#58a6ff;">💡 观察：主线程执行时 UI 进度条冻结；Isolate 执行时 UI 保持流畅</span>
+    </div>
+  </div>
+
+  <h2>三种 Isolate 用法对比</h2>
+  <table class="compare-table">
+    <tr><th>方式</th><th>适用场景</th><th>复杂度</th><th>通信方式</th></tr>
+    <tr><td><code>Isolate.run()</code></td><td>一次性计算任务</td><td>简单</td><td>自动返回结果</td></tr>
+    <tr><td><code>Isolate.spawn()</code></td><td>需要多次通信</td><td>中等</td><td>SendPort / ReceivePort</td></tr>
+    <tr><td><code>compute()</code></td><td>Flutter 项目便捷用法</td><td>简单</td><td>自动返回结果</td></tr>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════
+     Section 3: Zone
+     ═══════════════════════════════════════ -->
+<div id="zone" class="section">
+  <h1>Zone 异步执行区域</h1>
+  <p class="subtitle">拦截异常、注入变量、自定义异步行为</p>
+
+  <div class="note">
+    <p><strong>Zone 是什么？</strong> Zone 是异步回调的执行环境。每个异步操作（Future、Timer、Stream）都在创建它的 Zone 中执行。Zone 可以"捕获"未处理的异常、拦截 print、注入变量。</p>
+  </div>
+
+  <div class="canvas-box">
+    <h3>Zone 嵌套结构</h3>
+    <p style="font-size:13px; color:#8b949e; margin-bottom:16px;">子 Zone 继承父 Zone 的规则，可覆盖特定行为</p>
+
+    <div class="zone-diagram">
+      <div class="zone-layer root">
+        <span class="zone-label">Root Zone（根 Zone）</span>
+        <span class="zone-item-tag tag-print">print: 默认输出到控制台</span>
+
+        <div class="zone-layer guarded">
+          <span class="zone-label">runZonedGuarded Zone</span>
+          <span class="zone-item-tag tag-catch">onError: 捕获所有未处理异常</span>
+          <span class="zone-item-tag tag-print">print: 添加 [APP] 前缀</span>
+
+          <div class="zone-layer child">
+            <span class="zone-label">子 Zone（runZoned）</span>
+            <span class="zone-item-tag tag-value">values: { userId: '42' }</span>
+            <span class="zone-item-tag tag-catch">继承父 Zone 的 onError</span>
+            <span class="zone-item-tag tag-print">print: 添加 [DEBUG] 前缀</span>
+
+            <div style="margin-top:12px; padding:8px; background:#161b22; border-radius:6px; font-size:12px;">
+              <p style="color:#7ee787;">✅ 此 Zone 中的异步异常 → 被 runZonedGuarded 的 onError 捕获</p>
+              <p style="color:#58a6ff;">✅ 此 Zone 中可以访问 userId 变量</p>
+              <p style="color:#f0883e;">✅ print 输出：[DEBUG] 原始内容</p>
+            </div>
+          </div>
+
+          <div style="margin-top:8px; padding:8px; background:#161b22; border-radius:6px; font-size:12px;">
+            <p style="color:#f78166;">🚨 未被 try-catch 捕获的异常 → 会冒泡到这里被 onError 拦截</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Flutter 中的标准用法</h2>
+  <div class="canvas-box">
+    <h3>main.dart 全局错误捕获模板</h3>
+    <div style="background:#0d1117; padding:16px; border-radius:8px; font-family:monospace; font-size:13px; line-height:1.8; overflow-x:auto;">
+      <span style="color:#ff7b72;">void</span> <span style="color:#d2a8ff;">main</span>() {<br>
+      &nbsp;&nbsp;<span style="color:#79c0ff;">// Widget 层错误（build 阶段）</span><br>
+      &nbsp;&nbsp;<span style="color:#ffa657;">FlutterError</span>.onError = (details) {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;Crashlytics.instance.recordFlutterError(details);<br>
+      &nbsp;&nbsp;};<br><br>
+      &nbsp;&nbsp;<span style="color:#79c0ff;">// 异步错误（Zone 未捕获的）</span><br>
+      &nbsp;&nbsp;<span style="color:#d2a8ff;">runZonedGuarded</span>(() {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#d2a8ff;">runApp</span>(MyApp());<br>
+      &nbsp;&nbsp;}, (error, stackTrace) {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;Crashlytics.instance.recordError(error, stackTrace);<br>
+      &nbsp;&nbsp;});<br>
+      }
+    </div>
+  </div>
+
+  <h2>Zone 三大能力</h2>
+  <table class="compare-table">
+    <tr><th>能力</th><th>API</th><th>用途</th></tr>
+    <tr><td>异常捕获</td><td><code>runZonedGuarded()</code></td><td>全局崩溃监控（Flutter 必备）</td></tr>
+    <tr><td>变量注入</td><td><code>zoneValues</code></td><td>请求ID追踪、用户上下文传递</td></tr>
+    <tr><td>行为拦截</td><td><code>ZoneSpecification</code></td><td>自定义日志、Timer追踪、性能监控</td></tr>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════
+     Section 4: 代码生成
+     ═══════════════════════════════════════ -->
+<div id="codegen" class="section">
+  <h1>元编程与代码生成</h1>
+  <p class="subtitle">通过注解驱动，编译时自动生成代码（零运行时开销）</p>
+
+  <div class="canvas-box">
+    <h3>代码生成工作流（点击逐步演示）</h3>
+    <div class="codegen-controls">
+      <button onclick="nextCodegenStep()">▶ 下一步</button>
+      <button onclick="resetCodegen()">🔄 重置</button>
+      <span style="margin-left:12px; font-size:13px; color:#8b949e;" id="codegen-step-label">步骤 0 / 5</span>
+    </div>
+
+    <div class="codegen-flow">
+      <div class="codegen-step" id="cg-step-1">
+        <h5>① 手写源码</h5>
+        <p>添加注解标记</p>
+        <div class="code-preview">
+@JsonSerializable()<br>
+class User {<br>
+&nbsp;&nbsp;String name;<br>
+&nbsp;&nbsp;int age;<br>
+}
+        </div>
+      </div>
+      <div class="codegen-arrow">→</div>
+      <div class="codegen-step" id="cg-step-2">
+        <h5>② 运行命令</h5>
+        <p>触发构建工具</p>
+        <div class="code-preview">
+$ dart run build_runner build<br><br>
+[INFO] Generating outputs...
+        </div>
+      </div>
+      <div class="codegen-arrow">→</div>
+      <div class="codegen-step" id="cg-step-3">
+        <h5>③ 解析 AST</h5>
+        <p>扫描注解和类型信息</p>
+        <div class="code-preview">
+扫描 → 找到 @JsonSerializable<br>
+类名: User<br>
+字段: name(String), age(int)
+        </div>
+      </div>
+      <div class="codegen-arrow">→</div>
+      <div class="codegen-step" id="cg-step-4">
+        <h5>④ 生成代码</h5>
+        <p>写入 .g.dart 文件</p>
+        <div class="code-preview">
+_$UserFromJson(json) {<br>
+&nbsp;&nbsp;return User(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name: json['name'],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;age: json['age'],<br>
+&nbsp;&nbsp;);<br>
+}
+        </div>
+      </div>
+      <div class="codegen-arrow">→</div>
+      <div class="codegen-step" id="cg-step-5">
+        <h5>⑤ 编译合并</h5>
+        <p>part 指令合并源码</p>
+        <div class="code-preview">
+user.dart<br>
++ user.g.dart<br>
+= 完整可运行代码 ✅
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>常用代码生成库</h2>
+  <table class="compare-table">
+    <tr><th>库名</th><th>功能</th><th>生成文件</th><th>使用频率</th></tr>
+    <tr><td><code>json_serializable</code></td><td>JSON ↔ Dart 对象</td><td>.g.dart</td><td>⭐⭐⭐⭐⭐</td></tr>
+    <tr><td><code>freezed</code></td><td>不可变类 + copyWith + 相等性</td><td>.freezed.dart</td><td>⭐⭐⭐⭐⭐</td></tr>
+    <tr><td><code>retrofit</code></td><td>REST API 接口</td><td>.g.dart</td><td>⭐⭐⭐⭐</td></tr>
+    <tr><td><code>injectable</code></td><td>依赖注入</td><td>.config.dart</td><td>⭐⭐⭐</td></tr>
+    <tr><td><code>auto_route</code></td><td>类型安全路由</td><td>.gr.dart</td><td>⭐⭐⭐</td></tr>
+    <tr><td><code>drift</code></td><td>类型安全数据库</td><td>.g.dart</td><td>⭐⭐⭐</td></tr>
+  </table>
+
+  <div class="note">
+    <p><strong>为什么不用反射（Reflection）？</strong></p>
+    <ul>
+      <li>Dart 的 <code>dart:mirrors</code> 已被废弃，Flutter 直接禁用</li>
+      <li>反射会阻止 tree shaking → 包体积暴增</li>
+      <li>代码生成是编译时的 → 零运行时开销 + 编译时检查</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     Section 5: Tree Shaking
+     ═══════════════════════════════════════ -->
+<div id="treeshake" class="section">
+  <h1>Tree Shaking 原理</h1>
+  <p class="subtitle">编译器自动移除未使用代码，减小包体积</p>
+
+  <div class="note">
+    <p><strong>原理：</strong>从入口（main 函数）开始，编译器追踪所有被引用的代码路径。没有被任何路径引用到的代码会被"摇掉"（不打包到最终产物中）。</p>
+  </div>
+
+  <div class="canvas-box">
+    <h3>Tree Shaking 可视化演示</h3>
+    <p style="font-size:13px; color:#8b949e; margin-bottom:12px;">点击"执行 Tree Shaking"观察未使用的代码被移除</p>
+
+    <div class="tree-controls">
+      <button onclick="runTreeShaking()" id="ts-btn">🌳 执行 Tree Shaking</button>
+      <button onclick="resetTree()" style="background:#21262d;">🔄 重置</button>
+    </div>
+
+    <div class="tree-code-panels">
+      <div class="tree-panel">
+        <h4 style="color:#58a6ff;">main.dart（入口文件）</h4>
+        <div class="tree-code-line used" id="ts-1">import 'utils.dart';</div>
+        <div class="tree-code-line used" id="ts-2"></div>
+        <div class="tree-code-line used" id="ts-3">void main() {</div>
+        <div class="tree-code-line used" id="ts-4">&nbsp;&nbsp;var r = MathUtils.add(1, 2);</div>
+        <div class="tree-code-line used" id="ts-5">&nbsp;&nbsp;print(r);</div>
+        <div class="tree-code-line used" id="ts-6">}</div>
+      </div>
+
+      <div class="tree-panel">
+        <h4 style="color:#f0883e;">utils.dart（工具库）</h4>
+        <div class="tree-code-line used" id="ts-7">class MathUtils {</div>
+        <div class="tree-code-line used" id="ts-8">&nbsp;&nbsp;// ✅ 被 main 引用</div>
+        <div class="tree-code-line used" id="ts-9">&nbsp;&nbsp;static add(a, b) => a + b;</div>
+        <div class="tree-code-line unused" id="ts-10"></div>
+        <div class="tree-code-line unused" id="ts-11">&nbsp;&nbsp;// ❌ 未被引用</div>
+        <div class="tree-code-line unused" id="ts-12">&nbsp;&nbsp;static sub(a, b) => a - b;</div>
+        <div class="tree-code-line unused" id="ts-13">&nbsp;&nbsp;static mul(a, b) => a * b;</div>
+        <div class="tree-code-line used" id="ts-14">}</div>
+        <div class="tree-code-line unused" id="ts-15"></div>
+        <div class="tree-code-line unused" id="ts-16">// ❌ 整个类未被引用</div>
+        <div class="tree-code-line unused" id="ts-17">class StringUtils {</div>
+        <div class="tree-code-line unused" id="ts-18">&nbsp;&nbsp;static upper(s) => ...;</div>
+        <div class="tree-code-line unused" id="ts-19">}</div>
+        <div class="tree-code-line unused" id="ts-20"></div>
+        <div class="tree-code-line unused" id="ts-21">// ❌ 未被引用</div>
+        <div class="tree-code-line unused" id="ts-22">void unusedFunc() {}</div>
+      </div>
+    </div>
+
+    <div class="tree-stats">
+      <div class="tree-stat">
+        <div class="num green" id="ts-kept">6</div>
+        <div class="label">保留的代码行</div>
+      </div>
+      <div class="tree-stat">
+        <div class="num red" id="ts-removed">0</div>
+        <div class="label">被移除的代码行</div>
+      </div>
+      <div class="tree-stat">
+        <div class="num" style="color:#f0883e;" id="ts-ratio">0%</div>
+        <div class="label">体积缩减</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Tree Shaking 的敌人</h2>
+  <table class="compare-table">
+    <tr><th>模式</th><th>为什么阻止 Tree Shaking</th><th>解决方案</th></tr>
+    <tr><td>反射 (dart:mirrors)</td><td>编译器无法静态分析运行时调用</td><td>用代码生成替代（Flutter 已禁用 mirrors）</td></tr>
+    <tr><td>dynamic 滥用</td><td>类型不确定，需保守保留所有可能</td><td>使用具体类型</td></tr>
+    <tr><td>字符串动态查找</td><td>通过字符串引用无法追踪</td><td>使用直接引用</td></tr>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════
+     Section 6: 总结对比
+     ═══════════════════════════════════════ -->
+<div id="summary" class="section">
+  <h1>知识点总结对比</h1>
+  <p class="subtitle">资深 Flutter 开发需要掌握的 Dart 深度知识点全景</p>
+
+  <table class="compare-table">
+    <tr>
+      <th>知识点</th><th>核心概念</th><th>Flutter 应用场景</th><th>面试重要度</th>
+    </tr>
+    <tr>
+      <td><strong>async/await</strong></td>
+      <td>异步编程，不阻塞 Event Loop</td>
+      <td>网络请求、数据库操作、文件IO</td>
+      <td>⭐⭐⭐⭐⭐</td>
+    </tr>
+    <tr>
+      <td><strong>Stream</strong></td>
+      <td>异步事件序列（多个值）</td>
+      <td>StreamBuilder、事件总线、WebSocket</td>
+      <td>⭐⭐⭐⭐⭐</td>
+    </tr>
+    <tr>
+      <td><strong>Isolate</strong></td>
+      <td>独立线程 + 消息通信（无锁）</td>
+      <td>JSON解析、图片处理、加密计算</td>
+      <td>⭐⭐⭐⭐</td>
+    </tr>
+    <tr>
+      <td><strong>Zone</strong></td>
+      <td>异步执行区域，可拦截异常</td>
+      <td>全局崩溃监控、日志系统、性能追踪</td>
+      <td>⭐⭐⭐</td>
+    </tr>
+    <tr>
+      <td><strong>泛型</strong></td>
+      <td>类型安全的可复用代码</td>
+      <td>Provider&lt;T&gt;、StreamBuilder&lt;T&gt;、ApiResponse&lt;T&gt;</td>
+      <td>⭐⭐⭐⭐</td>
+    </tr>
+    <tr>
+      <td><strong>扩展方法</strong></td>
+      <td>给已有类型添加方法</td>
+      <td>ThemeExtension、工具方法扩展</td>
+      <td>⭐⭐⭐</td>
+    </tr>
+    <tr>
+      <td><strong>元编程/代码生成</strong></td>
+      <td>注解驱动，编译时生成代码</td>
+      <td>json_serializable、freezed、retrofit</td>
+      <td>⭐⭐⭐⭐</td>
+    </tr>
+    <tr>
+      <td><strong>Tree Shaking</strong></td>
+      <td>自动移除未使用的代码</td>
+      <td>包体积优化、AOT 编译原理</td>
+      <td>⭐⭐⭐</td>
+    </tr>
+  </table>
+
+  <h2>学习路径建议</h2>
+  <div class="canvas-box">
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="background:#7ee787; color:#000; padding:4px 12px; border-radius:12px; font-size:13px; font-weight:600; min-width:80px; text-align:center;">入门</span>
+        <span style="font-size:14px;">async/await → Stream → 泛型 → 扩展方法 → 模式匹配</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="background:#f0883e; color:#000; padding:4px 12px; border-radius:12px; font-size:13px; font-weight:600; min-width:80px; text-align:center;">进阶</span>
+        <span style="font-size:14px;">Isolate → Zone → 代码生成（build_runner）</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="background:#f78166; color:#000; padding:4px 12px; border-radius:12px; font-size:13px; font-weight:600; min-width:80px; text-align:center;">资深</span>
+        <span style="font-size:14px;">Tree Shaking 原理 → AOT 编译优化 → 包体积分析 → Event Loop 深度调优</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><strong>对应项目文件：</strong></p>
+    <ul>
+      <li><code>09_async.dart</code> — async/await + Stream</li>
+      <li><code>08_generics.dart</code> — 泛型</li>
+      <li><code>07_mixins_extensions.dart</code> — 扩展方法 + Mixin</li>
+      <li><code>11_patterns_records.dart</code> — 模式匹配 + Record</li>
+      <li><code>12_isolates.dart</code> — Isolate 并行计算</li>
+      <li><code>13_zones.dart</code> — Zone 异步区域</li>
+      <li><code>14_metaprogramming.dart</code> — 元编程与代码生成</li>
+      <li><code>15_tree_shaking.dart</code> — Tree Shaking 原理</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// Navigation
+// ══════════════════════════════════════════
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ══════════════════════════════════════════
+// Event Loop Simulation
+// ══════════════════════════════════════════
+let mtQueue = [], evQueue = [], elLog = [], autoTimer = null, elStep = 0;
+const mtNames = ['Future.microtask()', 'scheduleMicrotask()', 'Future.then() 回调', 'async 后续代码'];
+const evNames = ['Timer 回调', 'IO 事件', '手势事件', 'Future.delayed()', 'Stream 数据'];
+
+function renderQueues() {
+  const mtEl = document.getElementById('microtask-queue');
+  const evEl = document.getElementById('event-queue');
+  mtEl.innerHTML = mtQueue.map(t => `<div class="queue-item mt">${t}</div>`).join('') || '<div style="color:#484f58;font-size:12px;padding:8px;">空</div>';
+  evEl.innerHTML = evQueue.map(t => `<div class="queue-item ev">${t}</div>`).join('') || '<div style="color:#484f58;font-size:12px;padding:8px;">空</div>';
+}
+
+function addMicrotask() {
+  mtQueue.push(mtNames[elStep % mtNames.length]);
+  elStep++;
+  logEL(`📥 添加 Microtask: ${mtQueue[mtQueue.length-1]}`);
+  renderQueues();
+}
+
+function addEvent() {
+  evQueue.push(evNames[elStep % evNames.length]);
+  elStep++;
+  logEL(`📥 添加 Event: ${evQueue[evQueue.length-1]}`);
+  renderQueues();
+}
+
+function runOneStep() {
+  const execEl = document.getElementById('executing');
+  // 先处理所有 microtask
+  if (mtQueue.length > 0) {
+    const task = mtQueue.shift();
+    execEl.innerHTML = `<div class="exec-item">⚡ ${task}</div>`;
+    logEL(`✅ 执行 Microtask: ${task}`);
+    setTimeout(() => { if(mtQueue.length === 0) execEl.innerHTML = ''; }, 800);
+  } else if (evQueue.length > 0) {
+    const task = evQueue.shift();
+    execEl.innerHTML = `<div class="exec-item">⚡ ${task}</div>`;
+    logEL(`✅ 执行 Event: ${task}`);
+    setTimeout(() => { if(evQueue.length === 0) execEl.innerHTML = ''; }, 800);
+  } else {
+    logEL('⚠️ 队列为空，没有可执行的任务');
+    execEl.innerHTML = '';
+  }
+  renderQueues();
+}
+
+function autoRun() {
+  if (autoTimer) { clearInterval(autoTimer); autoTimer = null; document.getElementById('auto-run-btn').textContent = '⏩ 自动运行'; return; }
+  document.getElementById('auto-run-btn').textContent = '⏸ 暂停';
+  autoTimer = setInterval(() => {
+    if (mtQueue.length === 0 && evQueue.length === 0) {
+      clearInterval(autoTimer); autoTimer = null;
+      document.getElementById('auto-run-btn').textContent = '⏩ 自动运行';
+      logEL('🏁 所有任务执行完毕');
+      return;
+    }
+    runOneStep();
+  }, 600);
+}
+
+function resetEL() {
+  if (autoTimer) clearInterval(autoTimer);
+  autoTimer = null;
+  mtQueue = []; evQueue = []; elStep = 0;
+  document.getElementById('microtask-queue').innerHTML = '';
+  document.getElementById('event-queue').innerHTML = '';
+  document.getElementById('executing').innerHTML = '';
+  document.getElementById('el-log').innerHTML = '<div class="log-line" style="color:#58a6ff;">💡 提示：点击按钮添加任务，然后点击"执行一步"观察顺序</div>';
+  document.getElementById('auto-run-btn').textContent = '⏩ 自动运行';
+}
+
+function logEL(msg) {
+  const log = document.getElementById('el-log');
+  const color = msg.includes('Microtask') ? '#f78166' : msg.includes('Event') ? '#58a6ff' : '#8b949e';
+  log.innerHTML += `<div class="log-line" style="color:${color}">${msg}</div>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+// ══════════════════════════════════════════
+// Isolate Simulation
+// ══════════════════════════════════════════
+function simulateMainBlocking() {
+  const prog = document.getElementById('main-progress');
+  const status = document.getElementById('main-status');
+  const log = document.getElementById('isolate-log');
+  let p = 0;
+  status.textContent = '🔴 主线程被阻塞中...';
+  status.style.color = '#f78166';
+
+  // Simulate blocking: use synchronous loop that blocks the main thread
+  // We'll use requestAnimationFrame to show progress but with heavy sync work
+  const startTime = performance.now();
+  function blockStep() {
+    // Do heavy synchronous work to simulate blocking
+    const workStart = performance.now();
+    while (performance.now() - workStart < 50) {
+      Math.random() * Math.random(); // CPU work
+    }
+    p += 5;
+    prog.style.width = p + '%';
+    if (p < 100) {
+      setTimeout(blockStep, 0);
+    } else {
+      const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+      status.textContent = `完成 (耗时 ${elapsed}s)`;
+      status.style.color = '#7ee787';
+      log.innerHTML += `<div style="color:#f78166;">❌ 主线程执行: 阻塞了 ${(elapsed)}s，期间 UI 无法响应</div>`;
+      setTimeout(() => { prog.style.width = '0%'; status.textContent = '等待开始'; status.style.color = '#8b949e'; }, 3000);
+    }
+  }
+  blockStep();
+}
+
+function simulateIsolate() {
+  const prog = document.getElementById('iso-progress');
+  const status = document.getElementById('iso-status');
+  const log = document.getElementById('isolate-log');
+  let p = 0;
+  status.textContent = '🟢 Isolate 执行中（UI 流畅）';
+  status.style.color = '#7ee787';
+
+  // Use Web Worker concept: setTimeout to NOT block main thread
+  const startTime = performance.now();
+  const timer = setInterval(() => {
+    p += 5;
+    prog.style.width = p + '%';
+    if (p >= 100) {
+      clearInterval(timer);
+      const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+      status.textContent = `完成 (耗时 ${elapsed}s)`;
+      log.innerHTML += `<div style="color:#7ee787;">✅ Isolate 执行: 耗时 ${elapsed}s，期间 UI 保持流畅</div>`;
+      setTimeout(() => { prog.style.width = '0%'; status.textContent = '等待开始'; status.style.color = '#8b949e'; }, 3000);
+    }
+  }, 50);
+}
+
+// ══════════════════════════════════════════
+// Codegen Animation
+// ══════════════════════════════════════════
+let cgStep = 0;
+function nextCodegenStep() {
+  if (cgStep >= 5) return;
+  cgStep++;
+  for (let i = 1; i <= 5; i++) {
+    const el = document.getElementById(`cg-step-${i}`);
+    el.classList.toggle('active', i <= cgStep);
+  }
+  document.getElementById('codegen-step-label').textContent = `步骤 ${cgStep} / 5`;
+}
+function resetCodegen() {
+  cgStep = 0;
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById(`cg-step-${i}`).classList.remove('active');
+  }
+  document.getElementById('codegen-step-label').textContent = '步骤 0 / 5';
+}
+
+// ══════════════════════════════════════════
+// Tree Shaking Animation
+// ══════════════════════════════════════════
+let tsShaken = false;
+function runTreeShaking() {
+  if (tsShaken) return;
+  tsShaken = true;
+  const unusedIds = ['ts-10','ts-11','ts-12','ts-13','ts-15','ts-16','ts-17','ts-18','ts-19','ts-20','ts-21','ts-22'];
+  unusedIds.forEach((id, i) => {
+    setTimeout(() => {
+      document.getElementById(id).classList.add('shaken');
+    }, i * 150);
+  });
+  setTimeout(() => {
+    document.getElementById('ts-kept').textContent = '6';
+    document.getElementById('ts-removed').textContent = '12';
+    document.getElementById('ts-ratio').textContent = '67%';
+  }, unusedIds.length * 150 + 300);
+}
+function resetTree() {
+  tsShaken = false;
+  document.querySelectorAll('.tree-code-line').forEach(el => el.classList.remove('shaken'));
+  document.getElementById('ts-kept').textContent = '6';
+  document.getElementById('ts-removed').textContent = '0';
+  document.getElementById('ts-ratio').textContent = '0%';
+}
+
+// Pre-populate some tasks for demo
+addMicrotask(); addEvent(); addMicrotask(); addEvent();
+</script>
+</body>
+</html>
