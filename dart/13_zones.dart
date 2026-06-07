@@ -241,7 +241,7 @@ Future<void> main() async {
 
   var parentZone = Zone.current.fork(
     zoneValues: {#level: 'parent'},
-    zoneSpecification: ZoneSpecification(
+    specification: ZoneSpecification(
       print: (self, parent, zone, line) {
         parent.print(zone, '[Parent Zone] $line');
       },
