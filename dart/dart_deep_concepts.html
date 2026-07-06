@@ -5,46 +5,136 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dart 深度概念可视化讲解</title>
 <style>
+  /* ══════════════════════════════════════════
+     Theme Variables - Light (default)
+     ══════════════════════════════════════════ */
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f6f8fa;
+    --bg-tertiary: #eaeef2;
+    --bg-elevated: #ffffff;
+    --bg-canvas: #0d1117;
+    --text-primary: #1f2328;
+    --text-secondary: #656d76;
+    --text-tertiary: #8b949e;
+    --border-primary: #d0d7de;
+    --border-secondary: #d8dee4;
+    --border-tertiary: #eaeef2;
+    --accent-blue: #0969da;
+    --accent-blue-bg: #0969da1a;
+    --accent-blue-border: #0969da44;
+    --accent-orange: #bf3989;
+    --accent-orange-bg: #bf39891a;
+    --accent-orange-border: #bf398944;
+    --accent-green: #1a7f37;
+    --accent-green-bg: #1a7f371a;
+    --accent-green-border: #1a7f3744;
+    --accent-red: #cf222e;
+    --accent-red-bg: #cf222e1a;
+    --accent-red-border: #cf222e44;
+    --code-bg: #f6f8fa;
+    --nav-bg: rgba(255,255,255,0.85);
+    --nav-border: #d0d7de;
+    --nav-btn-bg: #f6f8fa;
+    --nav-btn-text: #1f2328;
+    --nav-btn-border: #d0d7de;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  /* ══════════════════════════════════════════
+     Theme Variables - Dark
+     ══════════════════════════════════════════ */
+  [data-theme="dark"] {
+    --bg-primary: #0f1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #21262d;
+    --bg-elevated: #161b22;
+    --bg-canvas: #0d1117;
+    --text-primary: #e1e4e8;
+    --text-secondary: #b1bac4;
+    --text-tertiary: #8b949e;
+    --border-primary: #30363d;
+    --border-secondary: #2d333b;
+    --border-tertiary: #21262d;
+    --accent-blue: #58a6ff;
+    --accent-blue-bg: #1f6feb22;
+    --accent-blue-border: #1f6feb44;
+    --accent-orange: #f0883e;
+    --accent-orange-bg: #f0883e22;
+    --accent-orange-border: #f0883e44;
+    --accent-green: #7ee787;
+    --accent-green-bg: #1a3a2a;
+    --accent-green-border: #7ee78744;
+    --accent-red: #f78166;
+    --accent-red-bg: #3d1f1f;
+    --accent-red-border: #f7816644;
+    --code-bg: #1c2128;
+    --nav-bg: rgba(15,17,23,0.95);
+    --nav-border: #2d333b;
+    --nav-btn-bg: #21262d;
+    --nav-btn-text: #c9d1d9;
+    --nav-btn-border: #30363d;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif;
-    background: #0f1117;
-    color: #e1e4e8;
+    background: var(--bg-primary);
+    color: var(--text-primary);
     line-height: 1.6;
+    transition: background 0.3s, color 0.3s;
   }
 
   /* ── Navigation ── */
   nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    background: rgba(15,17,23,0.95); backdrop-filter: blur(10px);
-    border-bottom: 1px solid #2d333b;
+    background: var(--nav-bg); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--nav-border);
     display: flex; justify-content: center; gap: 8px;
     padding: 12px 16px; flex-wrap: wrap;
+    transition: background 0.3s, border-color 0.3s;
   }
   nav button {
-    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    background: var(--nav-btn-bg); color: var(--nav-btn-text); border: 1px solid var(--nav-btn-border);
     padding: 8px 18px; border-radius: 20px; cursor: pointer;
     font-size: 14px; transition: all 0.3s;
   }
   nav button:hover, nav button.active {
-    background: #1f6feb; color: #fff; border-color: #1f6feb;
+    background: var(--accent-blue); color: #fff; border-color: var(--accent-blue);
+  }
+  nav .theme-toggle {
+    background: var(--nav-btn-bg);
+    border: 1px solid var(--nav-btn-border);
+    padding: 8px 14px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  nav .theme-toggle:hover {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
   }
 
   /* ── Sections ── */
   .section { display: none; padding: 80px 24px 40px; max-width: 960px; margin: 0 auto; }
   .section.active { display: block; }
-  h1 { font-size: 28px; margin-bottom: 8px; color: #58a6ff; }
-  h2 { font-size: 20px; margin: 32px 0 16px; color: #f0883e; }
-  h3 { font-size: 16px; margin: 20px 0 10px; color: #7ee787; }
-  p, li { color: #b1bac4; margin-bottom: 8px; }
-  .subtitle { color: #8b949e; font-size: 15px; margin-bottom: 24px; }
-  code { background: #1c2128; color: #f0883e; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
-  .note { background: #1c2128; border-left: 3px solid #1f6feb; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+  h1 { font-size: 28px; margin-bottom: 8px; color: var(--accent-blue); }
+  h2 { font-size: 20px; margin: 32px 0 16px; color: var(--accent-orange); }
+  h3 { font-size: 16px; margin: 20px 0 10px; color: var(--accent-green); }
+  p, li { color: var(--text-secondary); margin-bottom: 8px; }
+  .subtitle { color: var(--text-tertiary); font-size: 15px; margin-bottom: 24px; }
+  code { background: var(--code-bg); color: var(--accent-orange); padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: var(--code-bg); border-left: 3px solid var(--accent-blue); padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
 
   /* ── Animation Container ── */
   .canvas-box {
-    background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+    background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 12px;
     padding: 24px; margin: 20px 0; position: relative; overflow: hidden;
+    transition: background 0.3s, border-color 0.3s;
   }
   .canvas-box h3 { margin-top: 0; }
 
@@ -56,35 +146,35 @@
     justify-content: center;
   }
   .queue-box {
-    flex: 1; min-width: 200px; background: #0d1117; border: 2px solid #30363d;
+    flex: 1; min-width: 200px; background: var(--bg-canvas); border: 2px solid var(--border-primary);
     border-radius: 10px; padding: 16px; text-align: center;
   }
-  .queue-box.microtask { border-color: #f78166; }
-  .queue-box.event { border-color: #58a6ff; }
+  .queue-box.microtask { border-color: var(--accent-red); }
+  .queue-box.event { border-color: var(--accent-blue); }
   .queue-box h4 { margin-bottom: 12px; font-size: 14px; }
   .queue-item {
     padding: 8px 12px; margin: 6px 0; border-radius: 6px; font-size: 13px;
     animation: slideIn 0.5s ease-out;
   }
-  .queue-item.mt { background: #3d1f1f; color: #f78166; border: 1px solid #f7816644; }
-  .queue-item.ev { background: #1a2a4a; color: #58a6ff; border: 1px solid #58a6ff44; }
+  .queue-item.mt { background: var(--accent-red-bg); color: var(--accent-red); border: 1px solid var(--accent-red-border); }
+  .queue-item.ev { background: var(--accent-blue-bg); color: var(--accent-blue); border: 1px solid var(--accent-blue-border); }
   @keyframes slideIn {
     from { opacity: 0; transform: translateX(-20px); }
     to { opacity: 1; transform: translateX(0); }
   }
   .loop-arrow {
-    font-size: 48px; color: #f0883e; animation: spin 3s linear infinite;
+    font-size: 48px; color: var(--accent-orange); animation: spin 3s linear infinite;
     display: flex; align-items: center;
   }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .exec-box {
-    min-width: 200px; background: #0d1117; border: 2px solid #7ee787;
+    min-width: 200px; background: var(--bg-canvas); border: 2px solid var(--accent-green);
     border-radius: 10px; padding: 16px; text-align: center;
   }
-  .exec-box h4 { color: #7ee787; margin-bottom: 12px; font-size: 14px; }
+  .exec-box h4 { color: var(--accent-green); margin-bottom: 12px; font-size: 14px; }
   .exec-item {
     padding: 8px 12px; margin: 6px 0; border-radius: 6px; font-size: 13px;
-    background: #1a3a2a; color: #7ee787; border: 1px solid #7ee78744;
+    background: var(--accent-green-bg); color: var(--accent-green); border: 1px solid var(--accent-green-border);
     animation: pulse 1s ease-in-out;
   }
   @keyframes pulse {
@@ -92,15 +182,15 @@
   }
   #el-controls { text-align: center; margin-top: 16px; }
   #el-controls button {
-    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-primary);
     padding: 8px 16px; border-radius: 8px; cursor: pointer; margin: 4px;
     font-size: 13px; transition: all 0.2s;
   }
-  #el-controls button:hover { background: #30363d; }
+  #el-controls button:hover { background: var(--border-primary); }
   .el-log {
-    margin-top: 12px; background: #0d1117; border-radius: 8px; padding: 12px;
+    margin-top: 12px; background: var(--bg-canvas); border-radius: 8px; padding: 12px;
     font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
-    max-height: 200px; overflow-y: auto; color: #8b949e;
+    max-height: 200px; overflow-y: auto; color: var(--text-tertiary);
   }
   .el-log .log-line { margin: 2px 0; animation: fadeIn 0.3s; }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -114,17 +204,17 @@
   }
   .isolate-card {
     flex: 1; min-width: 260px; max-width: 360px;
-    background: #0d1117; border: 2px solid #30363d; border-radius: 12px;
+    background: var(--bg-canvas); border: 2px solid var(--border-primary); border-radius: 12px;
     padding: 20px; position: relative;
   }
-  .isolate-card.main { border-color: #58a6ff; }
-  .isolate-card.worker { border-color: #f78166; }
+  .isolate-card.main { border-color: var(--accent-blue); }
+  .isolate-card.worker { border-color: var(--accent-red); }
   .isolate-card h4 { text-align: center; margin-bottom: 16px; }
   .isolate-card .inner-box {
-    background: #161b22; border: 1px solid #21262d; border-radius: 8px;
+    background: var(--bg-secondary); border: 1px solid var(--bg-tertiary); border-radius: 8px;
     padding: 12px; margin: 8px 0;
   }
-  .isolate-card .inner-box h5 { font-size: 12px; color: #8b949e; margin-bottom: 8px; }
+  .isolate-card .inner-box h5 { font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; }
   .mem-block {
     display: flex; gap: 4px; flex-wrap: wrap;
   }
@@ -132,50 +222,50 @@
     width: 28px; height: 28px; border-radius: 4px; font-size: 9px;
     display: flex; align-items: center; justify-content: center;
   }
-  .mem-cell.used { background: #1f6feb33; color: #58a6ff; border: 1px solid #58a6ff44; }
-  .mem-cell.free { background: #21262d; color: #484f58; border: 1px solid #30363d; }
+  .mem-cell.used { background: #1f6feb33; color: var(--accent-blue); border: 1px solid var(--accent-blue-border); }
+  .mem-cell.free { background: var(--bg-tertiary); color: var(--text-tertiary); border: 1px solid var(--border-primary); }
 
   .comm-bridge {
     display: flex; flex-direction: column; align-items: center;
     justify-content: center; min-width: 80px;
   }
   .bridge-line {
-    width: 2px; height: 20px; background: #f0883e;
+    width: 2px; height: 20px; background: var(--accent-orange);
   }
   .bridge-arrow {
-    color: #f0883e; font-size: 20px; animation: bounce 1.5s ease-in-out infinite;
+    color: var(--accent-orange); font-size: 20px; animation: bounce 1.5s ease-in-out infinite;
   }
   @keyframes bounce {
     0%, 100% { transform: translateX(0); }
     50% { transform: translateX(6px); }
   }
   .bridge-label {
-    font-size: 11px; color: #f0883e; writing-mode: vertical-lr;
+    font-size: 11px; color: var(--accent-orange); writing-mode: vertical-lr;
     letter-spacing: 2px; margin: 8px 0;
   }
 
   /* Isolate Demo */
   .isolate-demo { text-align: center; margin-top: 20px; }
   .isolate-demo button {
-    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-primary);
     padding: 10px 20px; border-radius: 8px; cursor: pointer; margin: 4px;
     font-size: 13px; transition: all 0.2s;
   }
   .isolate-demo button:hover { background: #1f6feb; color: #fff; }
   .isolate-demo button:disabled { opacity: 0.5; cursor: not-allowed; }
   .isolate-result {
-    margin-top: 12px; padding: 12px; background: #0d1117; border-radius: 8px;
+    margin-top: 12px; padding: 12px; background: var(--bg-canvas); border-radius: 8px;
     font-family: monospace; font-size: 13px; min-height: 60px; text-align: left;
   }
   .progress-bar {
-    height: 8px; background: #21262d; border-radius: 4px; margin: 8px 0;
+    height: 8px; background: var(--bg-tertiary); border-radius: 4px; margin: 8px 0;
     overflow: hidden;
   }
   .progress-fill {
     height: 100%; border-radius: 4px; transition: width 0.1s;
-    background: linear-gradient(90deg, #1f6feb, #58a6ff);
+    background: linear-gradient(90deg, #1f6feb, var(--accent-blue));
   }
-  .progress-fill.blocked { background: linear-gradient(90deg, #da3633, #f78166); }
+  .progress-fill.blocked { background: linear-gradient(90deg, #da3633, var(--accent-red)); }
 
   /* ══════════════════════════════════════════
      3. Zone 嵌套图
@@ -185,23 +275,23 @@
     border: 2px dashed; border-radius: 12px; padding: 20px;
     margin: 8px 0; position: relative;
   }
-  .zone-layer.root { border-color: #484f58; background: #484f5810; }
-  .zone-layer.guarded { border-color: #f78166; background: #f7816610; }
-  .zone-layer.child { border-color: #58a6ff; background: #58a6ff10; }
+  .zone-layer.root { border-color: var(--text-tertiary); background: #484f5810; }
+  .zone-layer.guarded { border-color: var(--accent-red); background: #f7816610; }
+  .zone-layer.child { border-color: var(--accent-blue); background: #58a6ff10; }
   .zone-label {
-    position: absolute; top: -10px; left: 16px; background: #161b22;
+    position: absolute; top: -10px; left: 16px; background: var(--bg-secondary);
     padding: 0 8px; font-size: 12px; font-weight: 600;
   }
-  .zone-layer.root .zone-label { color: #8b949e; }
-  .zone-layer.guarded .zone-label { color: #f78166; }
-  .zone-layer.child .zone-label { color: #58a6ff; }
+  .zone-layer.root .zone-label { color: var(--text-tertiary); }
+  .zone-layer.guarded .zone-label { color: var(--accent-red); }
+  .zone-layer.child .zone-label { color: var(--accent-blue); }
   .zone-item-tag {
     display: inline-block; padding: 4px 10px; border-radius: 4px;
     font-size: 12px; margin: 4px;
   }
-  .tag-catch { background: #f7816622; color: #f78166; border: 1px solid #f7816644; }
-  .tag-value { background: #58a6ff22; color: #58a6ff; border: 1px solid #58a6ff44; }
-  .tag-print { background: #7ee78722; color: #7ee787; border: 1px solid #7ee78744; }
+  .tag-catch { background: var(--accent-red-bg); color: var(--accent-red); border: 1px solid var(--accent-red-border); }
+  .tag-value { background: var(--accent-blue-bg); color: var(--accent-blue); border: 1px solid var(--accent-blue-border); }
+  .tag-print { background: var(--accent-green-bg); color: var(--accent-green); border: 1px solid var(--accent-green-border); }
 
   /* ══════════════════════════════════════════
      4. 代码生成流程
@@ -211,24 +301,24 @@
     gap: 12px; flex-wrap: wrap; margin: 20px 0;
   }
   .codegen-step {
-    background: #0d1117; border: 2px solid #30363d; border-radius: 10px;
+    background: var(--bg-canvas); border: 2px solid var(--border-primary); border-radius: 10px;
     padding: 16px; min-width: 180px; text-align: center;
     transition: all 0.5s; opacity: 0.4; transform: scale(0.95);
   }
   .codegen-step.active { opacity: 1; transform: scale(1); border-color: #1f6feb; }
-  .codegen-step h5 { color: #58a6ff; font-size: 13px; margin-bottom: 8px; }
-  .codegen-step p { font-size: 12px; color: #8b949e; margin: 0; }
+  .codegen-step h5 { color: var(--accent-blue); font-size: 13px; margin-bottom: 8px; }
+  .codegen-step p { font-size: 12px; color: var(--text-tertiary); margin: 0; }
   .codegen-step .code-preview {
-    background: #161b22; border-radius: 6px; padding: 8px; margin-top: 8px;
-    font-family: monospace; font-size: 11px; color: #f0883e; text-align: left;
+    background: var(--bg-secondary); border-radius: 6px; padding: 8px; margin-top: 8px;
+    font-family: monospace; font-size: 11px; color: var(--accent-orange); text-align: left;
   }
-  .codegen-arrow { color: #f0883e; font-size: 24px; }
+  .codegen-arrow { color: var(--accent-orange); font-size: 24px; }
   .codegen-controls { text-align: center; margin: 16px 0; }
   .codegen-controls button {
-    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-primary);
     padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px;
   }
-  .codegen-controls button:hover { background: #30363d; }
+  .codegen-controls button:hover { background: var(--border-primary); }
 
   /* ══════════════════════════════════════════
      5. Tree Shaking 可视化
@@ -238,7 +328,7 @@
     display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
   }
   .tree-panel {
-    flex: 1; min-width: 280px; background: #0d1117; border: 1px solid #30363d;
+    flex: 1; min-width: 280px; background: var(--bg-canvas); border: 1px solid var(--border-primary);
     border-radius: 10px; padding: 16px;
   }
   .tree-panel h4 { font-size: 14px; margin-bottom: 12px; text-align: center; }
@@ -246,15 +336,15 @@
     padding: 4px 8px; margin: 3px 0; border-radius: 4px; font-family: monospace;
     font-size: 12px; transition: all 0.8s ease;
   }
-  .tree-code-line.used { background: #1a3a2a; color: #7ee787; border-left: 3px solid #7ee787; }
-  .tree-code-line.unused { background: #3d1f1f; color: #f7816688; border-left: 3px solid #f7816644; }
+  .tree-code-line.used { background: var(--accent-green-bg); color: var(--accent-green); border-left: 3px solid var(--accent-green); }
+  .tree-code-line.unused { background: var(--accent-red-bg); color: #f7816688; border-left: 3px solid var(--accent-red-border); }
   .tree-code-line.shaken {
     opacity: 0.15; transform: translateX(30px); text-decoration: line-through;
-    background: #3d1f1f33; color: #f7816644; border-left: 3px solid #f7816622;
+    background: #3d1f1f33; color: var(--accent-red-border); border-left: 3px solid var(--accent-red-bg);
   }
   .tree-controls { text-align: center; margin: 16px 0; }
   .tree-controls button {
-    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-primary);
     padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 14px;
     transition: all 0.2s;
   }
@@ -264,26 +354,176 @@
     flex-wrap: wrap;
   }
   .tree-stat {
-    text-align: center; padding: 12px 20px; background: #0d1117;
-    border: 1px solid #30363d; border-radius: 8px;
+    text-align: center; padding: 12px 20px; background: var(--bg-canvas);
+    border: 1px solid var(--border-primary); border-radius: 8px;
   }
   .tree-stat .num { font-size: 28px; font-weight: 700; }
-  .tree-stat .num.green { color: #7ee787; }
-  .tree-stat .num.red { color: #f78166; }
-  .tree-stat .label { font-size: 12px; color: #8b949e; }
+  .tree-stat .num.green { color: var(--accent-green); }
+  .tree-stat .num.red { color: var(--accent-red); }
+  .tree-stat .label { font-size: 12px; color: var(--text-tertiary); }
 
   /* ── Comparison Table ── */
   .compare-table {
     width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px;
   }
   .compare-table th {
-    background: #21262d; color: #58a6ff; padding: 10px 12px; text-align: left;
-    border-bottom: 2px solid #30363d;
+    background: var(--bg-tertiary); color: var(--accent-blue); padding: 10px 12px; text-align: left;
+    border-bottom: 2px solid var(--border-primary);
   }
   .compare-table td {
-    padding: 8px 12px; border-bottom: 1px solid #21262d; color: #b1bac4;
+    padding: 8px 12px; border-bottom: 1px solid var(--bg-tertiary); color: #b1bac4;
   }
-  .compare-table tr:hover td { background: #161b22; }
+  .compare-table tr:hover td { background: var(--bg-secondary); }
+
+  /* ══════════════════════════════════════════
+     Mixin 线性化
+     ══════════════════════════════════════════ */
+  .mixin-linearization {
+    position: relative; margin: 20px 0;
+  }
+  .mixin-stack {
+    display: flex; flex-direction: column-reverse;
+    align-items: center; gap: 4px; margin: 16px auto;
+    max-width: 420px;
+  }
+  .mixin-layer {
+    width: 100%; padding: 14px 20px; border-radius: 10px;
+    border: 2px solid var(--border-primary); background: var(--bg-canvas);
+    text-align: center; font-size: 14px; font-weight: 600;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+  .mixin-layer.class-base { border-color: var(--text-tertiary); color: var(--text-tertiary); }
+  .mixin-layer.mixin-a { border-color: var(--accent-blue); color: var(--accent-blue); background: var(--accent-blue-bg); }
+  .mixin-layer.mixin-b { border-color: var(--accent-orange); color: var(--accent-orange); background: var(--accent-orange-bg); }
+  .mixin-layer.class-final { border-color: var(--accent-green); color: var(--accent-green); background: var(--accent-green-bg); }
+  .mixin-layer.highlight {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px currentColor;
+    z-index: 10;
+  }
+  .mixin-arrow {
+    font-size: 18px; color: var(--text-tertiary); line-height: 1;
+    transition: color 0.3s;
+  }
+  .mixin-arrow.active { color: var(--accent-orange); animation: bounceDown 0.8s infinite; }
+  @keyframes bounceDown {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(4px); }
+  }
+  .mixin-controls { text-align: center; margin: 16px 0; }
+  .mixin-controls button {
+    background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-primary);
+    padding: 8px 18px; border-radius: 8px; cursor: pointer; margin: 4px;
+    font-size: 13px; transition: all 0.2s;
+  }
+  .mixin-controls button:hover { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+  .mixin-controls button.primary { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+  .mixin-code {
+    background: var(--bg-canvas); border-radius: 8px; padding: 14px;
+    font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+    line-height: 1.8; overflow-x: auto; margin-top: 16px;
+  }
+  .mixin-code .kw { color: var(--accent-red); }
+  .mixin-code .type { color: var(--accent-blue); }
+  .mixin-code .mixin-tag { color: var(--accent-orange); }
+  .mixin-super-flow {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; flex-wrap: wrap; margin: 16px 0;
+  }
+  .super-step {
+    padding: 8px 14px; border-radius: 6px; font-size: 12px;
+    background: var(--bg-tertiary); color: var(--text-tertiary); border: 1px solid var(--border-primary);
+    transition: all 0.3s;
+  }
+  .super-step.active { background: var(--accent-blue-bg); color: var(--accent-blue); border-color: var(--accent-blue); }
+  .super-step.done { background: var(--accent-green-bg); color: var(--accent-green); border-color: var(--accent-green-border); }
+
+  /* ══════════════════════════════════════════
+     Stream 数据流
+     ══════════════════════════════════════════ */
+  .stream-demo { position: relative; margin: 20px 0; }
+  .stream-pipeline {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; flex-wrap: wrap; margin: 20px 0;
+  }
+  .stream-box {
+    background: var(--bg-canvas); border: 2px solid var(--border-primary); border-radius: 10px;
+    padding: 14px; min-width: 120px; text-align: center;
+    transition: all 0.3s; position: relative;
+  }
+  .stream-box.source { border-color: var(--accent-blue); }
+  .stream-box.operator { border-color: var(--accent-orange); }
+  .stream-box.sink { border-color: var(--accent-green); }
+  .stream-box h5 { font-size: 12px; margin-bottom: 8px; }
+  .stream-box.source h5 { color: var(--accent-blue); }
+  .stream-box.operator h5 { color: var(--accent-orange); }
+  .stream-box.sink h5 { color: var(--accent-green); }
+  .stream-values {
+    min-height: 60px; display: flex; flex-direction: column;
+    gap: 4px; align-items: center; justify-content: flex-end;
+  }
+  .stream-value {
+    padding: 4px 10px; border-radius: 4px; font-size: 12px;
+    font-family: monospace; animation: streamFlow 0.6s ease-out;
+  }
+  .stream-value.s { background: var(--accent-blue-bg); color: var(--accent-blue); border: 1px solid var(--accent-blue-border); }
+  .stream-value.o { background: var(--accent-orange-bg); color: var(--accent-orange); border: 1px solid var(--accent-orange-border); }
+  .stream-value.k { background: var(--accent-green-bg); color: var(--accent-green); border: 1px solid var(--accent-green-border); }
+  @keyframes streamFlow {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .stream-arrow {
+    font-size: 20px; color: var(--accent-orange);
+    animation: streamArrow 1s ease-in-out infinite;
+  }
+  @keyframes streamArrow {
+    0%, 100% { opacity: 0.4; transform: translateX(0); }
+    50% { opacity: 1; transform: translateX(4px); }
+  }
+  .stream-operator-buttons {
+    text-align: center; margin: 16px 0;
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+  }
+  .stream-operator-buttons button {
+    background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-primary);
+    padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px;
+    transition: all 0.2s;
+  }
+  .stream-operator-buttons button:hover { background: var(--border-primary); }
+  .stream-operator-buttons button.active {
+    background: var(--accent-orange); color: #000; border-color: var(--accent-orange);
+  }
+  .stream-controls { text-align: center; margin: 16px 0; }
+  .stream-controls button {
+    background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-primary);
+    padding: 8px 18px; border-radius: 8px; cursor: pointer; margin: 4px;
+    font-size: 13px; transition: all 0.2s;
+  }
+  .stream-controls button:hover { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+  .stream-controls button.primary { background: var(--accent-green); color: #000; border-color: var(--accent-green); }
+  .stream-compare {
+    display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+    margin: 20px 0;
+  }
+  .stream-compare-col {
+    flex: 1; min-width: 200px; background: var(--bg-canvas);
+    border: 2px solid var(--border-primary); border-radius: 10px; padding: 16px;
+  }
+  .stream-compare-col.single { border-color: var(--accent-blue); }
+  .stream-compare-col.broadcast { border-color: var(--accent-red); }
+  .stream-compare-col h5 { text-align: center; margin-bottom: 12px; font-size: 13px; }
+  .stream-compare-col.single h5 { color: var(--accent-blue); }
+  .stream-compare-col.broadcast h5 { color: var(--accent-red); }
+  .listener-box {
+    background: var(--bg-secondary); border-radius: 6px; padding: 8px;
+    margin: 6px 0; font-size: 12px;
+  }
+  .listener-box .listener-name { font-weight: 600; margin-bottom: 4px; color: var(--text-primary); }
+  .listener-box .listener-data {
+    font-family: monospace; color: var(--accent-green); min-height: 20px;
+  }
 
   /* ── Responsive ── */
   @media (max-width: 640px) {
@@ -292,6 +532,8 @@
     .bridge-label { writing-mode: horizontal-tb; }
     nav { gap: 4px; }
     nav button { padding: 6px 12px; font-size: 12px; }
+    .stream-pipeline { flex-direction: column; }
+    .stream-arrow { transform: rotate(90deg); }
   }
 </style>
 </head>
@@ -299,11 +541,14 @@
 
 <nav>
   <button class="active" onclick="showSection('eventloop')">Event Loop</button>
+  <button onclick="showSection('mixin')">Mixin 线性化</button>
+  <button onclick="showSection('stream')">Stream 数据流</button>
   <button onclick="showSection('isolate')">Isolate</button>
   <button onclick="showSection('zone')">Zone</button>
   <button onclick="showSection('codegen')">代码生成</button>
   <button onclick="showSection('treeshake')">Tree Shaking</button>
   <button onclick="showSection('summary')">总结对比</button>
+  <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle" title="切换主题">🌙</button>
 </nav>
 
 <!-- ═══════════════════════════════════════
@@ -367,7 +612,194 @@
 </div>
 
 <!-- ═══════════════════════════════════════
-     Section 2: Isolate
+     Section 2: Mixin 线性化
+     ═══════════════════════════════════════ -->
+<div id="mixin" class="section">
+  <h1>Mixin 线性化（Mixin Linearization）</h1>
+  <p class="subtitle">Dart 特色概念：理解 with A, B 的执行顺序与 super 调用链</p>
+
+  <div class="note">
+    <p><strong>核心规则：</strong><code>class C with A, B</code> 的线性化顺序是 <strong>C → B → A → Object</strong>（从右往左叠加，最右边优先级最高）。调用 <code>super</code> 时沿着这个链向上找。</p>
+  </div>
+
+  <div class="canvas-box">
+    <h3>Mixin 叠加顺序可视化</h3>
+    <p style="font-size:13px; color:#8b949e; margin-bottom:12px;">点击"切换顺序"观察 with A,B 和 with B,A 的区别</p>
+
+    <div class="mixin-controls">
+      <button class="primary" onclick="toggleMixinOrder()">🔄 切换 with 顺序</button>
+      <button onclick="animateSuperChain()">▶ 演示 super 调用链</button>
+      <button onclick="resetMixin()">🔄 重置</button>
+    </div>
+
+    <div class="mixin-code" id="mixin-code-display">
+<span class="kw">class</span> <span class="type">C</span> <span class="kw">extends</span> <span class="type">Base</span> <span class="mixin-tag">with</span> <span class="type">A</span>, <span class="type">B</span> { }
+    </div>
+
+    <div class="mixin-stack" id="mixin-stack">
+      <div class="mixin-layer class-base" id="mixin-layer-base">
+        <div>Base（基类）</div>
+        <div style="font-size:11px; font-weight:400; opacity:0.7; margin-top:2px;">最底层</div>
+      </div>
+      <div class="mixin-arrow" id="mixin-arrow-1">↑</div>
+      <div class="mixin-layer mixin-a" id="mixin-layer-a">
+        <div>Mixin A</div>
+        <div style="font-size:11px; font-weight:400; opacity:0.7; margin-top:2px;">第 1 个 with</div>
+      </div>
+      <div class="mixin-arrow" id="mixin-arrow-2">↑</div>
+      <div class="mixin-layer mixin-b" id="mixin-layer-b">
+        <div>Mixin B</div>
+        <div style="font-size:11px; font-weight:400; opacity:0.7; margin-top:2px;">第 2 个 with（优先级高）</div>
+      </div>
+      <div class="mixin-arrow" id="mixin-arrow-3">↑</div>
+      <div class="mixin-layer class-final" id="mixin-layer-c">
+        <div>Class C（最终类）</div>
+        <div style="font-size:11px; font-weight:400; opacity:0.7; margin-top:2px;">最上层，方法调用从这里开始</div>
+      </div>
+    </div>
+
+    <div class="mixin-super-flow" id="super-flow">
+      <div class="super-step" id="super-step-0">C.doWork()</div>
+      <div class="super-step" id="super-step-1">→ B.doWork()</div>
+      <div class="super-step" id="super-step-2">→ A.doWork()</div>
+      <div class="super-step" id="super-step-3">→ Base.doWork()</div>
+    </div>
+  </div>
+
+  <h2>为什么顺序很重要？</h2>
+  <div class="canvas-box">
+    <h3>实际场景：日志 + 权限 + 缓存</h3>
+    <div class="mixin-code">
+<span class="kw">class</span> <span class="type">UserService</span> <span class="mixin-tag">with</span> <span class="type">LoggerMixin</span>, <span class="type">AuthMixin</span>, <span class="type">CacheMixin</span> {<br>
+&nbsp;&nbsp;<span class="kw">void</span> <span class="type">getUser</span>(id) { ... }<br>
+}<br><br>
+<span style="color:#8b949e;">// 调用 getUser() 的执行顺序（从右到左叠加）：</span><br>
+<span style="color:#f78166;">CacheMixin.getUser</span>  <span style="color:#8b949e;">← 最先执行，检查缓存</span><br>
+&nbsp;&nbsp;→ <span style="color:#f0883e;">AuthMixin.getUser</span>  <span style="color:#8b949e;">← 权限检查</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;→ <span style="color:#58a6ff;">LoggerMixin.getUser</span>  <span style="color:#8b949e;">← 打日志</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <span style="color:#7ee787;">UserService.getUser</span>  <span style="color:#8b949e;">← 真正执行业务逻辑</span>
+    </div>
+  </div>
+
+  <h2>关键理解</h2>
+  <table class="compare-table">
+    <tr><th>概念</th><th>说明</th><th>类比</th></tr>
+    <tr><td><code>with A, B</code></td><td>B 覆盖 A（B 优先级更高）</td><td>洋葱：B 在外层，A 在内层</td></tr>
+    <tr><td><code>super</code> 调用</td><td>沿着线性化链向上找</td><td>调用栈：从外向内逐层进入</td></tr>
+    <tr><td><code>mixin on Base</code></td><td>限制 mixin 只能用在 Base 的子类上</td><td>协议约束：保证 mixin 能调用父类方法</td></tr>
+    <tr><td>Flutter 中</td><td><code>with TickerProviderStateMixin</code></td><td>给 State 注入动画能力</td></tr>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════
+     Section 3: Stream 数据流
+     ═══════════════════════════════════════ -->
+<div id="stream" class="section">
+  <h1>Stream 数据流变换</h1>
+  <p class="subtitle">异步事件序列：理解数据如何从上游流经各个操作符到达下游</p>
+
+  <div class="note">
+    <p><strong>Stream 是什么？</strong>Stream 是异步事件的序列（可以发出多个值）。类似水管：数据从上游（source）流出，经过各种阀门（operator）变换，最终到达下游（sink / listener）。</p>
+  </div>
+
+  <div class="canvas-box">
+    <h3>Stream 操作符可视化演示</h3>
+    <p style="font-size:13px; color:#8b949e; margin-bottom:12px;">选择操作符，点击"发送数据"观察数据变换过程</p>
+
+    <div class="stream-operator-buttons">
+      <button class="active" onclick="setOperator('map')" id="op-map">map (×10)</button>
+      <button onclick="setOperator('where')" id="op-where">where (偶数)</button>
+      <button onclick="setOperator('take')" id="op-take">take (前3个)</button>
+      <button onclick="setOperator('mapWhere')" id="op-mapwhere">map + where</button>
+    </div>
+
+    <div class="stream-pipeline">
+      <div class="stream-box source">
+        <h5>📤 上游 (Source)</h5>
+        <div class="stream-values" id="stream-source">
+          <div class="stream-value s">1</div>
+          <div class="stream-value s">2</div>
+          <div class="stream-value s">3</div>
+          <div class="stream-value s">4</div>
+          <div class="stream-value s">5</div>
+        </div>
+      </div>
+
+      <div class="stream-arrow">→</div>
+
+      <div class="stream-box operator">
+        <h5>⚙️ 操作符 (Operator)</h5>
+        <div style="font-size:18px; font-weight:600; color:#f0883e;" id="stream-op-name">map</div>
+        <div style="font-size:11px; color:#8b949e; margin-top:4px;" id="stream-op-desc">每个值 ×10</div>
+      </div>
+
+      <div class="stream-arrow">→</div>
+
+      <div class="stream-box sink">
+        <h5>📥 下游 (Listener)</h5>
+        <div class="stream-values" id="stream-sink"></div>
+      </div>
+    </div>
+
+    <div class="stream-controls">
+      <button class="primary" onclick="sendStreamData()">▶ 发送数据</button>
+      <button onclick="resetStream()">🔄 重置</button>
+    </div>
+  </div>
+
+  <h2>单订阅 Stream vs 广播 Stream</h2>
+  <div class="canvas-box">
+    <p style="font-size:13px; color:#8b949e; margin-bottom:12px;">点击"发送数据"观察两种 Stream 的行为差异</p>
+
+    <div class="stream-compare">
+      <div class="stream-compare-col single">
+        <h5>🔵 Single-subscription（单订阅）</h5>
+        <div style="font-size:11px; color:#8b949e; margin-bottom:12px;">只能有一个监听者，第二个监听会报错</div>
+        <div class="listener-box">
+          <div class="listener-name" style="color:#58a6ff;">Listener A</div>
+          <div class="listener-data" id="single-listener-a">（等待数据...）</div>
+        </div>
+        <div class="listener-box" style="opacity:0.4;">
+          <div class="listener-name" style="color:#8b949e;">Listener B（无法监听）</div>
+          <div class="listener-data" style="color:#f78166;">❌ Bad state: Stream already listened to</div>
+        </div>
+      </div>
+
+      <div class="stream-compare-col broadcast">
+        <h5>🔴 Broadcast（广播）</h5>
+        <div style="font-size:11px; color:#8b949e; margin-bottom:12px;">可以有多个监听者，各自独立接收</div>
+        <div class="listener-box">
+          <div class="listener-name" style="color:#f78166;">Listener A</div>
+          <div class="listener-data" id="bc-listener-a">（等待数据...）</div>
+        </div>
+        <div class="listener-box">
+          <div class="listener-name" style="color:#f78166;">Listener B</div>
+          <div class="listener-data" id="bc-listener-b">（等待数据...）</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stream-controls">
+      <button onclick="sendCompareData()">▶ 发送数据到两个 Stream</button>
+      <button onclick="resetCompare()">🔄 重置</button>
+    </div>
+  </div>
+
+  <h2>常用操作符速查</h2>
+  <table class="compare-table">
+    <tr><th>操作符</th><th>作用</th><th>类比</th></tr>
+    <tr><td><code>.map()</code></td><td>每个值做变换</td><td>流水线：每个产品贴标签</td></tr>
+    <tr><td><code>.where()</code></td><td>过滤不符合条件的值</td><td>筛子：只留符合大小的</td></tr>
+    <tr><td><code>.take(n)</code></td><td>只取前 n 个值</td><td>取前 3 个苹果</td></tr>
+    <tr><td><code>.skip(n)</code></td><td>跳过前 n 个值</td><td>排队时前面走了 n 个</td></tr>
+    <tr><td><code>.debounce()</code></td><td>防抖：等稳定了才发</td><td>搜索框：停止输入才搜索</td></tr>
+    <tr><td><code>.asyncMap()</code></td><td>异步变换（每个值返回 Future）</td><td>每个数据要等网络请求</td></tr>
+    <tr><td><code>.transform()</code></td><td>自定义流转换器</td><td>自定义流水线机器</td></tr>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════
+     Section 4: Isolate
      ═══════════════════════════════════════ -->
 <div id="isolate" class="section">
   <h1>Isolate 架构与通信</h1>
@@ -724,9 +1156,15 @@ user.dart<br>
     </tr>
     <tr>
       <td><strong>Stream</strong></td>
-      <td>异步事件序列（多个值）</td>
-      <td>StreamBuilder、事件总线、WebSocket</td>
+      <td>异步事件序列（多个值），操作符变换</td>
+      <td>StreamBuilder、事件总线、WebSocket、BLoC</td>
       <td>⭐⭐⭐⭐⭐</td>
+    </tr>
+    <tr>
+      <td><strong>Mixin 线性化</strong></td>
+      <td>with A,B 的叠加顺序，super 调用链</td>
+      <td>TickerProviderStateMixin、WidgetsBindingObserver</td>
+      <td>⭐⭐⭐⭐</td>
     </tr>
     <tr>
       <td><strong>Isolate</strong></td>
@@ -771,7 +1209,7 @@ user.dart<br>
     <div style="display:flex; flex-direction:column; gap:12px;">
       <div style="display:flex; align-items:center; gap:12px;">
         <span style="background:#7ee787; color:#000; padding:4px 12px; border-radius:12px; font-size:13px; font-weight:600; min-width:80px; text-align:center;">入门</span>
-        <span style="font-size:14px;">async/await → Stream → 泛型 → 扩展方法 → 模式匹配</span>
+        <span style="font-size:14px;">async/await → Stream → Mixin线性化 → 泛型 → 扩展方法 → 模式匹配</span>
       </div>
       <div style="display:flex; align-items:center; gap:12px;">
         <span style="background:#f0883e; color:#000; padding:4px 12px; border-radius:12px; font-size:13px; font-weight:600; min-width:80px; text-align:center;">进阶</span>
@@ -788,8 +1226,8 @@ user.dart<br>
     <p><strong>对应项目文件：</strong></p>
     <ul>
       <li><code>09_async.dart</code> — async/await + Stream</li>
+      <li><code>07_mixins_extensions.dart</code> — Mixin 线性化 + 扩展方法</li>
       <li><code>08_generics.dart</code> — 泛型</li>
-      <li><code>07_mixins_extensions.dart</code> — 扩展方法 + Mixin</li>
       <li><code>11_patterns_records.dart</code> — 模式匹配 + Record</li>
       <li><code>12_isolates.dart</code> — Isolate 并行计算</li>
       <li><code>13_zones.dart</code> — Zone 异步区域</li>
@@ -800,6 +1238,27 @@ user.dart<br>
 </div>
 
 <script>
+// ══════════════════════════════════════════
+// Theme Toggle
+// ══════════════════════════════════════════
+function initTheme() {
+  const saved = localStorage.getItem('dart-deep-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const theme = saved || (prefersDark ? 'dark' : 'light');
+  applyTheme(theme);
+}
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('dart-deep-theme', theme);
+}
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+initTheme();
+
 // ══════════════════════════════════════════
 // Navigation
 // ══════════════════════════════════════════
@@ -994,6 +1453,187 @@ function resetTree() {
   document.getElementById('ts-kept').textContent = '6';
   document.getElementById('ts-removed').textContent = '0';
   document.getElementById('ts-ratio').textContent = '0%';
+}
+
+// ══════════════════════════════════════════
+// Mixin Linearization
+// ══════════════════════════════════════════
+let mixinOrderAB = true; // true: with A, B; false: with B, A
+let superAnimating = false;
+
+function toggleMixinOrder() {
+  mixinOrderAB = !mixinOrderAB;
+  const layerA = document.getElementById('mixin-layer-a');
+  const layerB = document.getElementById('mixin-layer-b');
+  const codeDisplay = document.getElementById('mixin-code-display');
+
+  if (mixinOrderAB) {
+    // with A, B: B is on top (higher priority)
+    layerA.style.order = '1';
+    layerB.style.order = '2';
+    codeDisplay.innerHTML = `<span class="kw">class</span> <span class="type">C</span> <span class="kw">extends</span> <span class="type">Base</span> <span class="mixin-tag">with</span> <span class="type">A</span>, <span class="type">B</span> { }`;
+    document.querySelector('#mixin-layer-a div:last-child').textContent = '第 1 个 with';
+    document.querySelector('#mixin-layer-b div:last-child').textContent = '第 2 个 with（优先级高）';
+    // Update super flow
+    document.getElementById('super-step-1').textContent = '→ B.doWork()';
+    document.getElementById('super-step-2').textContent = '→ A.doWork()';
+  } else {
+    // with B, A: A is on top (higher priority)
+    layerA.style.order = '2';
+    layerB.style.order = '1';
+    codeDisplay.innerHTML = `<span class="kw">class</span> <span class="type">C</span> <span class="kw">extends</span> <span class="type">Base</span> <span class="mixin-tag">with</span> <span class="type">B</span>, <span class="type">A</span> { }`;
+    document.querySelector('#mixin-layer-a div:last-child').textContent = '第 2 个 with（优先级高）';
+    document.querySelector('#mixin-layer-b div:last-child').textContent = '第 1 个 with';
+    // Update super flow
+    document.getElementById('super-step-1').textContent = '→ A.doWork()';
+    document.getElementById('super-step-2').textContent = '→ B.doWork()';
+  }
+  resetMixin();
+}
+
+function animateSuperChain() {
+  if (superAnimating) return;
+  superAnimating = true;
+  resetSuperAnimation();
+
+  const steps = ['mixin-layer-c', mixinOrderAB ? 'mixin-layer-b' : 'mixin-layer-a',
+                 mixinOrderAB ? 'mixin-layer-a' : 'mixin-layer-b', 'mixin-layer-base'];
+  const arrows = ['mixin-arrow-3', 'mixin-arrow-2', 'mixin-arrow-1'];
+
+  steps.forEach((id, i) => {
+    setTimeout(() => {
+      document.getElementById(id).classList.add('highlight');
+      document.getElementById(`super-step-${i}`).classList.add('active');
+      if (i > 0) {
+        document.getElementById(`super-step-${i-1}`).classList.remove('active');
+        document.getElementById(`super-step-${i-1}`).classList.add('done');
+      }
+      if (i < arrows.length) {
+        document.getElementById(arrows[i]).classList.add('active');
+      }
+    }, i * 800);
+  });
+
+  setTimeout(() => {
+    superAnimating = false;
+    document.getElementById('super-step-3').classList.remove('active');
+    document.getElementById('super-step-3').classList.add('done');
+  }, steps.length * 800 + 500);
+}
+
+function resetSuperAnimation() {
+  document.querySelectorAll('.mixin-layer').forEach(el => el.classList.remove('highlight'));
+  document.querySelectorAll('.mixin-arrow').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.super-step').forEach(el => {
+    el.classList.remove('active', 'done');
+  });
+}
+
+function resetMixin() {
+  superAnimating = false;
+  resetSuperAnimation();
+}
+
+// ══════════════════════════════════════════
+// Stream Data Flow
+// ══════════════════════════════════════════
+let currentOperator = 'map';
+let streamRunning = false;
+
+const operators = {
+  map: { name: 'map', desc: '每个值 ×10', transform: (v) => v * 10, filter: null },
+  where: { name: 'where', desc: '只保留偶数', transform: (v) => v, filter: (v) => v % 2 === 0 },
+  take: { name: 'take(3)', desc: '只取前 3 个', transform: (v) => v, filter: null, take: 3 },
+  mapWhere: { name: 'map + where', desc: '×10 后取偶数', transform: (v) => v * 10, filter: (v) => v * 10 % 20 === 0 },
+};
+
+function setOperator(op) {
+  currentOperator = op;
+  document.querySelectorAll('.stream-operator-buttons button').forEach(b => b.classList.remove('active'));
+  document.getElementById(`op-${op}`).classList.add('active');
+  const opConfig = operators[op];
+  document.getElementById('stream-op-name').textContent = opConfig.name;
+  document.getElementById('stream-op-desc').textContent = opConfig.desc;
+  resetStream();
+}
+
+function sendStreamData() {
+  if (streamRunning) return;
+  streamRunning = true;
+  resetStream(false);
+
+  const sourceValues = [1, 2, 3, 4, 5];
+  const opConfig = operators[currentOperator];
+  const sink = document.getElementById('stream-sink');
+  let count = 0;
+  let emitted = 0;
+
+  sourceValues.forEach((val, i) => {
+    setTimeout(() => {
+      // Check take
+      if (opConfig.take && emitted >= opConfig.take) {
+        if (i === sourceValues.length - 1) streamRunning = false;
+        return;
+      }
+      // Check filter
+      const transformed = opConfig.transform(val);
+      const passes = opConfig.filter ? opConfig.filter(val) : true;
+
+      if (passes) {
+        const item = document.createElement('div');
+        item.className = 'stream-value k';
+        item.textContent = transformed;
+        sink.appendChild(item);
+        emitted++;
+      }
+      count++;
+      if (count === sourceValues.length) {
+        streamRunning = false;
+        if (sink.children.length === 0) {
+          sink.innerHTML = '<div style="color:#8b949e;font-size:11px;">（无数据通过）</div>';
+        }
+      }
+    }, i * 600);
+  });
+}
+
+function resetStream(resetButtons = true) {
+  streamRunning = false;
+  document.getElementById('stream-sink').innerHTML = '';
+}
+
+// Stream compare: single vs broadcast
+let compareRunning = false;
+
+function sendCompareData() {
+  if (compareRunning) return;
+  compareRunning = true;
+  resetCompare(false);
+
+  const values = ['📦 事件1', '📦 事件2', '📦 事件3'];
+  const singleA = document.getElementById('single-listener-a');
+  const bcA = document.getElementById('bc-listener-a');
+  const bcB = document.getElementById('bc-listener-b');
+
+  values.forEach((val, i) => {
+    setTimeout(() => {
+      // Single subscription: only Listener A gets it
+      singleA.textContent = (singleA.textContent.includes('等待') ? '' : singleA.textContent + '  ') + val;
+
+      // Broadcast: both listeners get it
+      bcA.textContent = (bcA.textContent.includes('等待') ? '' : bcA.textContent + '  ') + val;
+      bcB.textContent = (bcB.textContent.includes('等待') ? '' : bcB.textContent + '  ') + val;
+
+      if (i === values.length - 1) compareRunning = false;
+    }, i * 700);
+  });
+}
+
+function resetCompare(resetButtons = true) {
+  compareRunning = false;
+  document.getElementById('single-listener-a').textContent = '（等待数据...）';
+  document.getElementById('bc-listener-a').textContent = '（等待数据...）';
+  document.getElementById('bc-listener-b').textContent = '（等待数据...）';
 }
 
 // Pre-populate some tasks for demo

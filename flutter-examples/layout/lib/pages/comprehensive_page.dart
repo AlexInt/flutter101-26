@@ -1,27 +1,14 @@
 /// ============================================================
-/// 09 - 综合实战：卡片列表页
-/// ============================================================
-/// 将前面学到的布局组件组合，实现一个完整的实际页面
-///
-/// 使用的布局组件：
-///   - Scaffold + AppBar        : 页面结构
-///   - Column + Row             : 线性布局
-///   - Stack + Positioned       : 层叠布局（Banner）
-///   - Expanded                 : 弹性布局
-///   - ListView.builder         : 列表（按需加载）
-///   - Container + Decoration   : 装饰与约束
-///   - Wrap                     : 流式布局（标签）
-///   - SizedBox / Padding       : 间距控制
+/// 09 - 综合实战：卡片列表页（iOS 风格）
 /// ============================================================
 
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 class ComprehensivePage extends StatelessWidget {
   const ComprehensivePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // 模拟数据
     final articles = [
       _Article(
         title: 'Flutter 布局系统详解',
@@ -30,8 +17,8 @@ class ComprehensivePage extends StatelessWidget {
         tags: ['布局', 'Row', 'Column', 'Stack'],
         readTime: '8分钟',
         likes: 156,
-        color: Colors.blue,
-        icon: Icons.flutter_dash,
+        color: CupertinoColors.systemBlue,
+        icon: CupertinoIcons.star_fill,
       ),
       _Article(
         title: 'Dart 异步编程指南',
@@ -40,18 +27,18 @@ class ComprehensivePage extends StatelessWidget {
         tags: ['async', 'Future', 'Stream'],
         readTime: '12分钟',
         likes: 203,
-        color: Colors.purple,
-        icon: Icons.code,
+        color: CupertinoColors.systemPurple,
+        icon: CupertinoIcons.chevron_left_slash_chevron_right,
       ),
       _Article(
-        title: 'Material Design 3 实践',
+        title: 'Cupertino Design 实践',
         author: '王五',
         category: '设计',
-        tags: ['Material3', 'Theme', 'UI'],
+        tags: ['Cupertino', 'Theme', 'UI'],
         readTime: '6分钟',
         likes: 89,
-        color: Colors.teal,
-        icon: Icons.palette,
+        color: CupertinoColors.systemTeal,
+        icon: CupertinoIcons.paintbrush,
       ),
       _Article(
         title: '状态管理方案对比',
@@ -60,8 +47,8 @@ class ComprehensivePage extends StatelessWidget {
         tags: ['Provider', 'Riverpod', 'Bloc'],
         readTime: '15分钟',
         likes: 312,
-        color: Colors.orange,
-        icon: Icons.settings_suggest,
+        color: CupertinoColors.systemOrange,
+        icon: CupertinoIcons.gear,
       ),
       _Article(
         title: 'Flutter 动画入门',
@@ -70,34 +57,30 @@ class ComprehensivePage extends StatelessWidget {
         tags: ['Animation', 'Hero', '过渡'],
         readTime: '10分钟',
         likes: 178,
-        color: Colors.pink,
-        icon: Icons.animation,
+        color: CupertinoColors.systemPink,
+        icon: CupertinoIcons.wand_stars,
       ),
     ];
 
-    return Scaffold(
-      body: CustomScrollView(
+    return CupertinoPageScaffold(
+      child: CustomScrollView(
         slivers: [
-          // ─────────────────────────────────────────
-          // 顶部 Banner（Stack + Positioned 层叠布局）
-          // ─────────────────────────────────────────
+          // 顶部 Banner
           SliverToBoxAdapter(
             child: SizedBox(
               height: 200,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // 渐变背景
                   Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.blue, Colors.indigo, Colors.purple],
+                        colors: [CupertinoColors.systemBlue, CupertinoColors.systemIndigo, CupertinoColors.systemPurple],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                     ),
                   ),
-                  // 内容
                   Positioned(
                     bottom: 30,
                     left: 20,
@@ -107,23 +90,23 @@ class ComprehensivePage extends StatelessWidget {
                       children: [
                         const Text(
                           'Flutter 技术专栏',
-                          style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: CupertinoColors.white, fontSize: 26, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           '探索 Flutter 开发的无限可能',
-                          style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 14),
+                          style: TextStyle(color: CupertinoColors.white.withOpacity(0.85), fontSize: 14),
                         ),
                       ],
                     ),
                   ),
-                  // 返回按钮
                   Positioned(
                     top: MediaQuery.of(context).padding.top + 8,
                     left: 8,
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                    child: CupertinoButton(
+                      padding: const EdgeInsets.all(8),
                       onPressed: () => Navigator.pop(context),
+                      child: const Icon(CupertinoIcons.back, color: CupertinoColors.white),
                     ),
                   ),
                 ],
@@ -131,9 +114,7 @@ class ComprehensivePage extends StatelessWidget {
             ),
           ),
 
-          // ─────────────────────────────────────────
-          // 分类标签（Wrap 流式布局）
-          // ─────────────────────────────────────────
+          // 分类标签
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -151,9 +132,7 @@ class ComprehensivePage extends StatelessWidget {
             ),
           ),
 
-          // ─────────────────────────────────────────
-          // 文章列表（ListView.builder 按需构建）
-          // ─────────────────────────────────────────
+          // 文章列表
           SliverPadding(
             padding: const EdgeInsets.all(16),
             sliver: SliverList(
@@ -170,137 +149,135 @@ class ComprehensivePage extends StatelessWidget {
     );
   }
 
-  /// 分类标签
   Widget _buildCategoryChip(String label, bool selected) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      child: InputChip(
-        label: Text(label),
-        selected: selected,
-        onSelected: (_) {},
-        selectedColor: Colors.blue.shade100,
-        backgroundColor: Colors.grey.shade100,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: selected ? CupertinoColors.systemBlue.withOpacity(0.12) : CupertinoColors.systemGrey6,
+        borderRadius: BorderRadius.circular(20),
+        border: selected ? Border.all(color: CupertinoColors.systemBlue.withOpacity(0.3)) : null,
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: selected ? CupertinoColors.systemBlue : CupertinoColors.secondaryLabel,
+          fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+          fontSize: 14,
+        ),
       ),
     );
   }
 
-  /// 文章卡片（综合使用多种布局组件）
   Widget _buildArticleCard(BuildContext context, _Article article) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {},
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          // Column: 垂直排列标题、标签、底部信息
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: CupertinoColors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(color: CupertinoColors.systemGrey.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              // Row: 水平排列图标和标题
-              Row(
+              Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  // 图标（Stack 叠加小圆点）
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        width: 44, height: 44,
-                        decoration: BoxDecoration(
-                          color: article.color.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(article.icon, color: article.color, size: 24),
-                      ),
-                      Positioned(
-                        bottom: -2, right: -2,
-                        child: Container(
-                          width: 14, height: 14,
-                          decoration: BoxDecoration(
-                            color: article.color,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 12),
-                  // Expanded: 标题占据剩余空间
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          article.title,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          article.category,
-                          style: TextStyle(color: article.color, fontSize: 12, fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.bookmark_border, color: Colors.grey, size: 20),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Wrap: 标签流式布局
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: article.tags.map((tag) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  Container(
+                    width: 44, height: 44,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(12),
+                      color: article.color.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text('#$tag', style: TextStyle(color: Colors.grey[700], fontSize: 11)),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 12),
-
-              // Row: 底部信息栏（作者、阅读时间、点赞）
-              Row(
-                children: [
-                  // 作者头像
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundColor: Colors.grey.shade300,
-                    child: Text(article.author[0], style: const TextStyle(fontSize: 10, color: Colors.white)),
+                    child: Icon(article.icon, color: article.color, size: 22),
                   ),
-                  const SizedBox(width: 6),
-                  Text(article.author, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-                  const SizedBox(width: 16),
-                  Icon(Icons.schedule, size: 14, color: Colors.grey[500]),
-                  const SizedBox(width: 4),
-                  Text(article.readTime, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
-                  // Spacer: 将点赞推到右侧
-                  const Spacer(),
-                  Icon(Icons.favorite_border, size: 16, color: Colors.red[300]),
-                  const SizedBox(width: 4),
-                  Text('${article.likes}', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                  Positioned(
+                    bottom: -2, right: -2,
+                    child: Container(
+                      width: 14, height: 14,
+                      decoration: BoxDecoration(
+                        color: article.color,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: CupertinoColors.white, width: 2),
+                      ),
+                    ),
+                  ),
                 ],
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      article.title,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      article.category,
+                      style: TextStyle(color: article.color, fontSize: 12, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(CupertinoIcons.bookmark, color: CupertinoColors.tertiaryLabel, size: 20),
             ],
           ),
-        ),
+          const SizedBox(height: 12),
+
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: article.tags.map((tag) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemGrey6,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text('#$tag', style: const TextStyle(color: CupertinoColors.secondaryLabel, fontSize: 11)),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Container(
+                width: 24, height: 24,
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemGrey4,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(article.author[0], style: const TextStyle(fontSize: 10, color: CupertinoColors.white)),
+              ),
+              const SizedBox(width: 6),
+              Text(article.author, style: const TextStyle(color: CupertinoColors.secondaryLabel, fontSize: 12)),
+              const SizedBox(width: 16),
+              const Icon(CupertinoIcons.clock, size: 14, color: CupertinoColors.tertiaryLabel),
+              const SizedBox(width: 4),
+              Text(article.readTime, style: const TextStyle(color: CupertinoColors.tertiaryLabel, fontSize: 12)),
+              const Spacer(),
+              const Icon(CupertinoIcons.heart, size: 16, color: CupertinoColors.systemRed),
+              const SizedBox(width: 4),
+              Text('${article.likes}', style: const TextStyle(color: CupertinoColors.secondaryLabel, fontSize: 12)),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
-/// 文章数据模型
 class _Article {
   final String title;
   final String author;
