@@ -39,14 +39,14 @@ class ListViewPage extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: CupertinoColors.white,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [BoxShadow(color: CupertinoColors.systemGrey.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 1))],
+                  boxShadow: [BoxShadow(color: CupertinoColors.systemGrey.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 1))],
                 ),
                 child: Row(
                   children: [
                     Container(
                       width: 36, height: 36,
                       decoration: BoxDecoration(
-                        color: CupertinoColors.systemBlue.withOpacity(0.12),
+                        color: CupertinoColors.systemBlue.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
@@ -90,9 +90,9 @@ class ListViewPage extends StatelessWidget {
                     width: 95,
                     margin: const EdgeInsets.only(right: 12),
                     decoration: BoxDecoration(
-                      color: colors[index].withOpacity(0.1),
+                      color: colors[index].withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: colors[index].withOpacity(0.2)),
+                      border: Border.all(color: colors[index].withValues(alpha: 0.2)),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -141,7 +141,7 @@ class ListViewPage extends StatelessWidget {
                 Container(
                   width: 40, height: 40,
                   decoration: BoxDecoration(
-                    color: CupertinoColors.systemBlue.withOpacity(0.15),
+                    color: CupertinoColors.systemBlue.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
@@ -182,7 +182,7 @@ class ListViewPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: CupertinoColors.systemBlue.withOpacity(0.08),
+        color: CupertinoColors.systemBlue.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
